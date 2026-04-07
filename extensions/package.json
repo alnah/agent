@@ -1,0 +1,25 @@
+{
+  "name": "pi-agent-extensions",
+  "private": true,
+  "scripts": {
+    "format": "biome format --write .",
+    "check": "biome check .",
+    "check:write": "biome check --write .",
+    "lint": "biome lint ."
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-ai": "*",
+    "@mariozechner/pi-coding-agent": "*",
+    "@mariozechner/pi-tui": "*",
+    "@sinclair/typebox": "*"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.10",
+    "@mariozechner/pi-ai": "0.65.2",
+    "@mariozechner/pi-coding-agent": "0.65.2",
+    "@mariozechner/pi-tui": "0.65.2",
+    "@sinclair/typebox": "0.34.49",
+    "@types/node": "25.5.2",
+    "typescript": "6.0.2"
+  }
+}
