@@ -21,5 +21,8 @@
     "@sinclair/typebox": "0.34.49",
     "@types/node": "25.5.2",
     "typescript": "6.0.2"
+  },
+  "dependencies": {
+    "ts-morph": "^27.0.2"
   }
 }

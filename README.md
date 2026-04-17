@@ -44,6 +44,7 @@ Topic 2: if rule 2; else rule 3; then rule 4; no rule 5a, rule 5b, etc.
 | `notifyer/` | Sends terminal notifications when a Pi turn finishes |
 | `review/` | Adds `/review` and `/end-review` for branch, commit, PR, folder, and uncommitted-change review workflows |
 | `todos/` | Adds a shared file-backed todo tool and `/todos` UI for assigning, refining, and closing work |
+| `typescript-symbols/` | Adds `ts_definition`, `ts_references`, `ts_rename`, and `ts_symbols` for TypeScript symbol navigation, lookup, and project-wide rename |
 | `usage/` | Adds `/usage` to inspect recent Pi session activity across 7, 30, and 90 day windows |
 | `window/` | Adds `/window` to inspect context-window usage, loaded resources, and observed skill reads |
 
@@ -105,6 +106,30 @@ If those files already exist, replace them with `ln -sf`.
 ### Reload Pi
 
 Use `/reload`, or restart Pi.
+
+### Local setup for `typescript-symbols/`
+
+`typescript-symbols/` depends on the local `tsconfig.json` or `jsconfig.json`.
+I do not enable it globally.
+I keep the code in this repo and turn it on only in the repos I want, through a local, untracked `.pi/settings.json`.
+
+In this repo:
+
+```json
+{
+  "extensions": ["../extensions/typescript-symbols"]
+}
+```
+
+In another local repo, point to this clone from that repo's `.pi/settings.json`. Use either an absolute path or the relative path that matches your own directory layout.
+
+```json
+{
+  "extensions": ["/absolute/path/to/agent/extensions/typescript-symbols"]
+}
+```
+
+The extension stays local to that repo, uses its current working directory, and resolves the nearest matching `tsconfig.json` or `jsconfig.json` for the requested file. If a repo contains several nested TypeScript projects, pass a file path inside the target project.
 
 ## Development
 
