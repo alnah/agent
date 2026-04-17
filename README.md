@@ -111,13 +111,13 @@ Use `/reload`, or restart Pi.
 
 `typescript-symbols/` depends on the local `tsconfig.json` or `jsconfig.json`.
 I do not enable it globally.
-I keep the code in this repo and turn it on only in the repos I want, through a local, untracked `.pi/settings.json`.
+I keep the code in this repo and turn it on only in the repos I want, through a local, untracked `.pi/settings.json` that loads this package for that repo.
 
 In this repo:
 
 ```json
 {
-  "extensions": ["../extensions/typescript-symbols"]
+  "packages": [".."]
 }
 ```
 
@@ -125,11 +125,11 @@ In another local repo, point to this clone from that repo's `.pi/settings.json`.
 
 ```json
 {
-  "extensions": ["/absolute/path/to/agent/extensions/typescript-symbols"]
+  "packages": ["/absolute/path/to/agent"]
 }
 ```
 
-The extension stays local to that repo, uses its current working directory, and resolves the nearest matching `tsconfig.json` or `jsconfig.json` for the requested file. If a repo contains several nested TypeScript projects, pass a file path inside the target project.
+The global Pi settings can keep excluding `typescript-symbols`, while the repo-local package entry re-enables it only for that project. The extension uses that repo's current working directory and resolves the nearest matching `tsconfig.json` or `jsconfig.json` for the requested file. If a repo contains several nested TypeScript projects, pass a file path inside the target project.
 
 ## Development
 
