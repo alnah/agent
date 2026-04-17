@@ -215,10 +215,7 @@ export default function sessionBreakdownExtension(pi: ExtensionAPI) {
             })
             .catch((error) => {
               stopTicker();
-              console.error(
-                "usage: failed to analyze sessions",
-                error,
-              );
+              console.error("usage: failed to analyze sessions", error);
               if (!aborted) done(null);
             });
 

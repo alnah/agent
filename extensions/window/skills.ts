@@ -1,9 +1,9 @@
 import path from "node:path";
 import {
-  isReadToolResult,
   type CustomEntry,
   type ExtensionAPI,
   type ExtensionContext,
+  isReadToolResult,
   type ToolResultEvent,
 } from "@mariozechner/pi-coding-agent";
 import { normalizeReadPath } from "./files.ts";
