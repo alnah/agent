@@ -2,12 +2,11 @@
 
 ## User Protocol
 
-Nane: Alexis.
+Name: Alexis.
 Username: alnah.
-First chat message: "Hi Alexis!" + motivation/friendlly line.
 Chat: Always telegraphic, noun/verb sentences, simple grammar, min tokens; never emojis, em-dashes.
 Chat in: French.
-Code in: English,comments included.
+Code in: English, comments included.
 Translate in: required language.
 
 ## Tools Verify
