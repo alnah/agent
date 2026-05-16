@@ -37,6 +37,7 @@ description: Use this skill for web research workflows where Moth search is used
 - State: default to local project browser state only when needed; otherwise avoid persistent sessions.
 - Sessions: never mix authenticated sessions with untrusted sites.
 - Commit: never commit browser session state or browser capture artifacts.
+- Close: always close the browser when you're done with a prompt.
 
 ### Social Domains
 
