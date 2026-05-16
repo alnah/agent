@@ -13,6 +13,7 @@ import {
 } from "./parsing.ts";
 
 const TODO_FILE_SUFFIX = ".md";
+const TODO_MARKDOWN_FILE_RE = /^[a-f0-9]{8}\.md$/;
 const SETTINGS_FILE = "settings.json";
 const DEFAULT_TODO_SETTINGS = Object.freeze({ gc: true, gcDays: 7 });
 
@@ -47,13 +48,13 @@ function normalizeTodoSettings(parsed) {
 }
 
 /**
- * Reports whether a directory entry looks like a todo markdown file.
+ * Reports whether a directory entry is a canonical todo markdown file.
  *
- * Settings files and lock files share the directory, so listing logic filters
- * to the markdown todo suffix explicitly.
+ * Settings files, lock files, and macOS AppleDouble sidecars can share the
+ * directory, so listing logic accepts only eight-lowercase-hex markdown names.
  */
 function isTodoMarkdownFile(fileName) {
-  return fileName.endsWith(TODO_FILE_SUFFIX);
+  return TODO_MARKDOWN_FILE_RE.test(fileName);
 }
 
 /**
