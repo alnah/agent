@@ -250,3 +250,14 @@ Include:
 - Do not ignore stack and project constraints.
 - Do not hide failed commands or skipped checks.
 - Do not claim confidence higher than the evidence supports.
+
+## Reference links
+
+- CMU SEI, ATAM collection  
+  https://www.sei.cmu.edu/library/architecture-tradeoff-analysis-method-collection/
+- ISO/IEC 25010, Maintainability  
+  https://iso25000.com/index.php/en/iso-25000-standards/iso-25010/57-maintainability
+- GRASP overview  
+  https://en.wikipedia.org/wiki/GRASP_(object-oriented_design)
+- DePaul, Analytic Rubrics  
+  https://resources.depaul.edu/teaching-commons/teaching-guides/feedback-grading/rubrics/Pages/types-of-rubrics.aspx
