@@ -54,19 +54,28 @@ Use this 0 to 5 scale:
 - 4: strong. The criterion is consistently satisfied, with minor exceptions.
 - 5: excellent. The criterion is deliberately enforced by design, tests, and conventions.
 
-Use this default weighting unless project constraints justify another one:
+Use equal weighting unless project constraints justify another one:
 
-- GRASP criteria: 70% of the global score.
-- ISO/IEC 25010 Maintainability criteria: 20% of the global score.
-- Validation and test evidence: 10% of the global score.
+- GRASP criteria: one third of the global score.
+- ISO/IEC 25010 Maintainability criteria: one third of the global score.
+- Validation and test evidence: one third of the global score.
 
 Global score formula:
 
 ```text
-global = 0.70 * average(GRASP scores) / 5 * 100
-       + 0.20 * average(ISO maintainability scores) / 5 * 100
-       + 0.10 * validation evidence score / 5 * 100
+global = average(
+  average(GRASP scores) / 5 * 100,
+  average(ISO maintainability scores) / 5 * 100,
+  validation evidence score / 5 * 100,
+)
 ```
+
+Apply these ATAM risk caps after calculating the score:
+
+- Any unresolved P0 risk caps the grade at D and the score at 69.
+- Any unresolved P1 risk caps the grade at C and the score at 79.
+- If validation cannot be run, confidence cannot be high.
+- If validation fails, state whether the failure is architectural, environmental, or unrelated.
 
 Also provide a letter grade:
 
