@@ -239,6 +239,7 @@ List risks by priority: P0, then P1, then P2, then P3. Use the ATAM risk format 
 ### 5. Recommendations
 
 List small, testable, ordered actions. Include expected validation for each action.
+For every P0, P1, and P2 recommendation, include an anti-iatrogenic guardrail: behavior baseline or characterization test before change, blast radius, rollback path, and success metric.
 
 ### 6. Evidence
 
