@@ -1,0 +1,292 @@
+{
+  "providers": {
+    "fireworks": {
+      "modelOverrides": {
+        "accounts/fireworks/models/minimax-m3": {
+          "input": ["text", "image"],
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": null,
+            "low": null,
+            "medium": "medium",
+            "high": null,
+            "xhigh": null
+          }
+        },
+        "accounts/fireworks/models/minimax-m2p7": {
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": null,
+            "low": null,
+            "medium": "medium",
+            "high": null,
+            "xhigh": null
+          }
+        },
+        "accounts/fireworks/models/deepseek-v4-flash": {
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": null,
+            "low": null,
+            "medium": "medium",
+            "high": "high",
+            "xhigh": null
+          }
+        },
+        "accounts/fireworks/models/deepseek-v4-pro": {
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": null,
+            "low": null,
+            "medium": "medium",
+            "high": "high",
+            "xhigh": null
+          }
+        },
+        "accounts/fireworks/models/glm-5p1": {
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": null,
+            "low": null,
+            "medium": null,
+            "high": "high",
+            "xhigh": null
+          }
+        },
+        "accounts/fireworks/models/glm-5p2": {
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": null,
+            "low": "low",
+            "medium": null,
+            "high": "high",
+            "xhigh": null
+          }
+        },
+        "accounts/fireworks/routers/glm-5p1-fast": {
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": null,
+            "low": null,
+            "medium": null,
+            "high": "high",
+            "xhigh": null
+          }
+        },
+        "accounts/fireworks/routers/glm-5p2-fast": {
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": null,
+            "low": "low",
+            "medium": null,
+            "high": "high",
+            "xhigh": null
+          }
+        },
+        "accounts/fireworks/models/gpt-oss-120b": {
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": null
+          }
+        },
+        "accounts/fireworks/models/gpt-oss-20b": {
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": null
+          }
+        }
+      }
+    },
+    "deepinfra": {
+      "baseUrl": "https://api.deepinfra.com/v1/openai",
+      "api": "openai-completions",
+      "apiKey": "$DEEPINFRA_API_KEY",
+      "authHeader": true,
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false,
+        "maxTokensField": "max_tokens",
+        "supportsStrictMode": false,
+        "supportsLongCacheRetention": false
+      },
+      "models": [
+        {
+          "id": "zai-org/GLM-5.2",
+          "name": "GLM-5.2 via DeepInfra",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": "none",
+            "low": "high",
+            "medium": "high",
+            "high": "high",
+            "xhigh": "max"
+          },
+          "input": [
+            "text"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 32768,
+          "cost": {
+            "input": 0.95,
+            "output": 3,
+            "cacheRead": 0.18,
+            "cacheWrite": 0
+          },
+          "compat": {
+            "supportsReasoningEffort": true,
+            "thinkingFormat": "zai"
+          }
+        },
+        {
+          "id": "moonshotai/Kimi-K2.7-Code",
+          "name": "Kimi K2.7 Code via DeepInfra",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": null,
+            "low": null,
+            "medium": null,
+            "xhigh": null
+          },
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.74,
+            "output": 3.5,
+            "cacheRead": 0.15,
+            "cacheWrite": 0
+          },
+          "compat": {
+            "requiresReasoningContentOnAssistantMessages": true
+          }
+        },
+        {
+          "id": "deepseek-ai/DeepSeek-V4-Pro",
+          "name": "DeepSeek V4 Pro via DeepInfra",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "minimal": "high",
+            "low": "high",
+            "medium": "high",
+            "high": "high",
+            "xhigh": "max"
+          },
+          "input": [
+            "text"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 393216,
+          "cost": {
+            "input": 1.3,
+            "output": 2.6,
+            "cacheRead": 0.1,
+            "cacheWrite": 0
+          },
+          "compat": {
+            "supportsReasoningEffort": true,
+            "requiresReasoningContentOnAssistantMessages": true,
+            "thinkingFormat": "deepseek"
+          }
+        },
+        {
+          "id": "deepseek-ai/DeepSeek-V4-Flash",
+          "name": "DeepSeek V4 Flash via DeepInfra",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "minimal": "high",
+            "low": "high",
+            "medium": "high",
+            "high": "high",
+            "xhigh": "max"
+          },
+          "input": [
+            "text"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 393216,
+          "cost": {
+            "input": 0.1,
+            "output": 0.2,
+            "cacheRead": 0.02,
+            "cacheWrite": 0
+          },
+          "compat": {
+            "supportsReasoningEffort": true,
+            "requiresReasoningContentOnAssistantMessages": true,
+            "thinkingFormat": "deepseek"
+          }
+        },
+        {
+          "id": "XiaomiMiMo/MiMo-V2.5",
+          "name": "MiMo V2.5 via DeepInfra",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "minimal": "low",
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "high"
+          },
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.4,
+            "output": 2,
+            "cacheRead": 0.08,
+            "cacheWrite": 0
+          },
+          "compat": {
+            "supportsReasoningEffort": true,
+            "requiresReasoningContentOnAssistantMessages": true,
+            "thinkingFormat": "deepseek"
+          }
+        },
+        {
+          "id": "XiaomiMiMo/MiMo-V2.5-Pro",
+          "name": "MiMo V2.5 Pro via DeepInfra",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "minimal": "low",
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "high"
+          },
+          "input": [
+            "text"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 1,
+            "output": 3,
+            "cacheRead": 0.2,
+            "cacheWrite": 0
+          },
+          "compat": {
+            "supportsReasoningEffort": true,
+            "requiresReasoningContentOnAssistantMessages": true,
+            "thinkingFormat": "deepseek"
+          }
+        }
+      ]
+    }
+  }
+}
