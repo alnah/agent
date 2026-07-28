@@ -53,6 +53,7 @@ Topic 2: if rule 2; else rule 3; then rule 4; no rule 5a, rule 5b, etc.
 | Skill | What it does |
 | --- | --- |
 | `git-workflow/` | Git and GitHub operating rules for status, diffs, commits, sync, PRs, and recovery |
+| `plane/` | Manages Plane through its public REST API with local-first documentation lookup and guarded mutations |
 | `web-research/` | Web research workflow: use Codex for discovery and [Rodney](https://github.com/simonw/rodney) for fetching and verification |
 
 ### Prompt templates
