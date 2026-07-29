@@ -62,12 +62,6 @@ Topic 2: if rule 2; else rule 3; then rule 4; no rule 5a, rule 5b, etc.
 | --- | --- |
 | `title.md` | Generates a short ISO-prefixed Pi session title |
 
-### Themes
-
-| Theme | What it does |
-| --- | --- |
-| `dracula.json` | Dracula-inspired theme for Pi |
-
 
 
 ## Quick start
@@ -93,7 +87,6 @@ Pi will auto-discover:
 - `extensions/`
 - `skills/`
 - `prompts/`
-- `themes/`
 
 ### Link the global context files Pi expects at fixed paths
 
