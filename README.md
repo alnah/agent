@@ -54,7 +54,7 @@ Topic 2: if rule 2; else rule 3; then rule 4; no rule 5a, rule 5b, etc.
 | --- | --- |
 | `git-workflow/` | Git and GitHub operating rules for status, diffs, commits, sync, PRs, and recovery |
 | `plane/` | Manages Plane through its public REST API with local-first documentation lookup and guarded mutations |
-| `web-research/` | Web research workflow: use Codex for discovery and [Rodney](https://github.com/simonw/rodney) for fetching and verification |
+| `web-research/` | Web research workflow: Moth search for discovery, Moth browser for fetching and verification |
 
 ### Prompt templates
 
@@ -146,4 +146,4 @@ npm run format
 
 - [Mario Zechner](https://github.com/badlogic) for [Pi](https://github.com/badlogic/pi-mono)
 - [Armin Ronacher](https://github.com/mitsuhiko) for the code and ideas behind the `answer`, `aside`, `files`, `loop`, `review`, `todos`, `usage`, and `window` extensions via [`agent-stuff`](https://github.com/mitsuhiko/agent-stuff)
-- [Simon Willison](https://github.com/simonw) for [Rodney](https://github.com/simonw/rodney), which the `web-research` skill uses as its fetch and verification layer
+
