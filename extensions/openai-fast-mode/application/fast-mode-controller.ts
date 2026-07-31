@@ -64,6 +64,7 @@ export class FastModeController {
   transformProviderPayload(
     model: ModelSnapshot | undefined,
     payload: unknown,
+    view: FastModeView,
   ): PayloadTransformResult {
     const state = this.state.snapshot();
     if (state.mode === "disabled" || state.fault) {
@@ -72,7 +73,14 @@ export class FastModeController {
     if (!this.eligibilityPolicy.evaluate(model).eligible) {
       return { kind: "unchanged", payload };
     }
-    return this.payloadDecorator.decorate(payload);
+
+    const result = this.payloadDecorator.decorate(payload);
+    if (result.kind === "failure") {
+      this.state.setFault(result.fault);
+      this.render(model, view);
+      view.notify(result.fault.message, "error");
+    }
+    return result;
   }
 
   private derivePresentation(

@@ -64,6 +64,7 @@ export function registerPiRuntime(
     const result = controller.transformProviderPayload(
       toModelSnapshot(context.model),
       event.payload,
+      new PiViewAdapter(context),
     );
     return result.payload;
   });

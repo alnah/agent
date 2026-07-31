@@ -29,7 +29,12 @@ export class PiViewAdapter implements FastModeView {
   }
 
   notify(message: string, level: FastModeNotificationLevel): void {
-    if (!this.context.hasUI) return;
+    if (!this.context.hasUI) {
+      if (level === "error") {
+        process.stderr.write(`[openai-fast-mode] ${message}\n`);
+      }
+      return;
+    }
     this.context.ui.notify(message, level);
   }
 }
