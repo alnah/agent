@@ -42,6 +42,7 @@ Topic 2: if rule 2; else rule 3; then rule 4; no rule 5a, rule 5b, etc.
 | `files/` | Adds `/files` and `/diff` to browse repo files, recent references, diffs, Finder reveal, and Quick Look |
 | `loop/` | Adds `/loop` plus `signal_loop_success` so Pi can keep iterating until a stop condition is met |
 | `notifyer/` | Sends terminal notifications when a Pi turn finishes |
+| `openai-fast-mode/` | Adds opt-in OpenAI priority-tier requests for GPT-5.6 Sol with `--fast` and `/fast` |
 | `review/` | Adds `/review` and `/end-review` for branch, commit, PR, folder, and uncommitted-change review workflows |
 | `todos/` | Adds a shared file-backed todo tool and `/todos` UI for assigning, refining, and closing work |
 | `typescript-symbols/` | Adds `ts_definition`, `ts_references`, `ts_rename`, and `ts_symbols` for TypeScript symbol navigation, lookup, and project-wide rename |
