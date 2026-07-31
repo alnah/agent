@@ -8,6 +8,7 @@
     "lint": "biome lint ."
   },
   "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
     "@mariozechner/pi-ai": "*",
     "@mariozechner/pi-coding-agent": "*",
     "@mariozechner/pi-tui": "*",
@@ -15,6 +16,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
+    "@earendil-works/pi-coding-agent": "0.83.0",
     "@mariozechner/pi-ai": "0.65.2",
     "@mariozechner/pi-coding-agent": "0.65.2",
     "@mariozechner/pi-tui": "0.65.2",
