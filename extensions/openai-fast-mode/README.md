@@ -138,10 +138,14 @@ A controlled request from the earlier hook-only implementation proved that Codex
 accepted the priority body but Pi accounted it at the standard multiplier. That
 result triggered the native wrapper now present.
 
-The wrapper has not yet received a second controlled live request. Codex applied
-tier and Pi priority accounting remain pending revalidation. OpenAI Responses is
-also not live-validated. Do not treat either provider as release-validated until
-its gate is completed.
+A second controlled live Codex request validated the wrapper with native auto
+transport. The final payload tier was `priority`, the request completed with
+`stopReason: "stop"`, and Pi recorded 1,597 input and 5 output tokens. Catalogue
+rates produce a standard-tier base cost of `$0.008135`; Pi recorded `$0.01627`,
+for the expected priority multiplier of exactly `2.0`.
+
+OpenAI Responses remains pending live validation. Do not treat that direct
+provider as release-validated until its separate gate is completed.
 
 ## Disable or remove
 
