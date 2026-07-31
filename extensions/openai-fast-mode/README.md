@@ -141,7 +141,7 @@ shutdown order could replace or unregister the other wrapper. Use only one
 
 This extension intentionally has no automated tests, fixtures, mocks, or test
 dependencies. Validation uses static checks, offline provider probes, and
-controlled live requests.
+controlled live requests./re
 
 ## Disable or remove
 
