@@ -26,11 +26,13 @@ does not change Pi's thinking level or any reasoning payload field.
 
 ## Usage
 
-Start Pi with fast mode armed:
+Start only the initial Pi session with fast mode armed:
 
 ```bash
 pi --fast
 ```
+
+This flag does not change the global default.
 
 Control the current extension runtime:
 
@@ -54,13 +56,34 @@ more than standard processing. Check current provider pricing before use.
 
 ## State and lifecycle
 
-State is in memory only. It is not written to sessions or settings.
+Fast mode has a global default and an independent state for each session.
 
-Reload, new, resume, and fork create a fresh extension runtime. The new runtime
-starts disabled unless Pi was launched with `--fast`.
+`/fast on` and `/fast off` update the current session and the global default used
+by future sessions in every workspace. Sessions that are already open do not
+change. If concurrent sessions update the default, the last completed write wins.
 
-Model changes do not disable an armed mode. They only switch the derived footer
-and request behavior between `waiting` and `priority`.
+A new session copies the global default. Resume and reload restore that session's
+last mode. A fork inherits the source session's current mode. Tree navigation
+restores the latest mode on the selected branch when one exists.
+
+`--fast` overrides only the initial session started by that Pi process. It is
+saved into that session but never changes the global default. Later `/new`,
+`/resume`, and `/fork` operations follow their normal persisted state.
+
+Session state uses versioned Pi custom entries. These entries never enter model
+context. The global default uses this mode-only file:
+
+```text
+~/.pi/agent/openai-fast-mode.json
+```
+
+`PI_CODING_AGENT_DIR` relocates that file with the rest of Pi's global config.
+Writes use a mode-0600 temporary file and atomic rename. Only `armed` or
+`disabled` is stored. Provider faults are never persisted.
+
+Every session that opens or resumes while armed emits the priority-pricing
+warning. Model changes do not disable an armed mode. They only switch the derived
+footer and request behavior between `waiting` and `priority`.
 
 The extension installs a native Codex provider wrapper during runtime setup. It
 unregisters that wrapper during session shutdown so reload, replacement, or
@@ -117,7 +140,12 @@ fallback request.
 An invalid eligible payload latches `fast: error` and reports a sanitized error.
 For Codex, the final wrapper enforcement fails the provider stream instead of
 sending a body whose tier disagrees with accounting. Use `/fast on` or
-`/fast off` to clear the fault.
+`/fast off` to clear the fault. Faults are never restored in another runtime.
+
+Malformed persisted state is ignored with a sanitized warning. A session-entry
+write failure does not revert the current in-memory mode. A global write failure
+does not revert the current session, but future sessions keep the previous
+default.
 
 For Codex priority requests, the final wrapper enforcement runs after the normal
 payload-hook chain. Earlier and later hook changes are preserved except for the
@@ -141,11 +169,12 @@ shutdown order could replace or unregister the other wrapper. Use only one
 
 This extension intentionally has no automated tests, fixtures, mocks, or test
 dependencies. Validation uses static checks, offline provider probes, and
-controlled live requests./re
+controlled live requests.
 
 ## Disable or remove
 
-Use `/fast off` for the current runtime. Omit `--fast` on future starts.
+Use `/fast off` to disable the current session and the global default. Omit
+`--fast` on future starts.
 
 To disable the extension entirely, use `pi config` for the local package or add
 this package filter to the package entry:
@@ -157,4 +186,6 @@ this package filter to the package entry:
 ```
 
 Removing `extensions/openai-fast-mode/` from the package removes the extension.
-Reload or restart Pi to restore the builtin Codex provider.
+Reload or restart Pi to restore the builtin Codex provider. The mode-only global
+preference is harmless when the extension is absent. Delete
+`~/.pi/agent/openai-fast-mode.json` if it should also be removed.
