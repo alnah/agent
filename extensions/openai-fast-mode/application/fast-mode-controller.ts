@@ -1,6 +1,9 @@
 import type { FastCommandParser } from "../domain/fast-command.ts";
 import type { FastModeEligibilityPolicy } from "../domain/fast-mode-policy.ts";
-import type { InMemoryFastModeState } from "../domain/fast-mode-state.ts";
+import type {
+  FastMode,
+  InMemoryFastModeState,
+} from "../domain/fast-mode-state.ts";
 import type { ModelSnapshot } from "../domain/model-snapshot.ts";
 import type {
   PayloadTransformResult,
@@ -10,6 +13,11 @@ import type { FastModePresentation, FastModeView } from "./fast-mode-view.ts";
 
 const PRICING_WARNING =
   "Fast mode armed. OpenAI priority pricing applies to eligible requests.";
+
+export type FastModeCommandResult =
+  | { readonly kind: "ignored" }
+  | { readonly kind: "status" }
+  | { readonly kind: "changed"; readonly mode: FastMode };
 
 /** Application controller for fast mode lifecycle and request events. */
 export class FastModeController {
@@ -21,24 +29,33 @@ export class FastModeController {
   ) {}
 
   initialize(
-    enabledByFlag: boolean,
+    mode: FastMode,
     model: ModelSnapshot | undefined,
     view: FastModeView,
   ): void {
-    this.state.initialize(enabledByFlag);
+    this.state.initialize(mode);
     this.render(model, view);
-    if (enabledByFlag) view.notify(PRICING_WARNING, "warning");
+    if (mode === "armed") view.notify(PRICING_WARNING, "warning");
+  }
+
+  restore(
+    mode: FastMode,
+    model: ModelSnapshot | undefined,
+    view: FastModeView,
+  ): void {
+    this.state.initialize(mode);
+    this.render(model, view);
   }
 
   handleCommand(
     rawCommand: string,
     model: ModelSnapshot | undefined,
     view: FastModeView,
-  ): void {
+  ): FastModeCommandResult {
     const parsed = this.commandParser.parse(rawCommand);
     if (!parsed.valid) {
       view.notify("Usage: /fast on|off|status", "error");
-      return;
+      return { kind: "ignored" };
     }
 
     const previous = this.state.snapshot();
@@ -46,15 +63,29 @@ export class FastModeController {
     if (parsed.command === "off") this.state.disable();
 
     const presentation = this.render(model, view);
+    if (parsed.command === "status") {
+      view.notify(this.describe(presentation), "info");
+      return { kind: "status" };
+    }
+
+    const result: FastModeCommandResult = {
+      kind: "changed",
+      mode: parsed.command === "on" ? "armed" : "disabled",
+    };
     const isActivation =
       parsed.command === "on" &&
       (previous.mode === "disabled" || previous.fault !== undefined);
     if (isActivation) {
       view.notify(PRICING_WARNING, "warning");
-      return;
+      return result;
     }
 
     view.notify(this.describe(presentation), "info");
+    return result;
+  }
+
+  getMode(): FastMode {
+    return this.state.snapshot().mode;
   }
 
   handleModelSelection(model: ModelSnapshot, view: FastModeView): void {

@@ -1,7 +1,9 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerPriorityCodexProvider } from "./adapters/codex-provider-adapter.ts";
+import { GlobalFastModeStore } from "./adapters/global-fast-mode-store.ts";
 import { registerPiRuntime } from "./adapters/pi-runtime-adapter.ts";
 import { FastModeController } from "./application/fast-mode-controller.ts";
+import { FastModeStartupPolicy } from "./application/fast-mode-startup-policy.ts";
 import { FastCommandParser } from "./domain/fast-command.ts";
 import { FastModeEligibilityPolicy } from "./domain/fast-mode-policy.ts";
 import { InMemoryFastModeState } from "./domain/fast-mode-state.ts";
@@ -20,5 +22,10 @@ export default function openAIFastModeExtension(pi: ExtensionAPI): void {
   );
 
   registerPriorityCodexProvider(pi, state, policy, decorator);
-  registerPiRuntime(pi, controller);
+  registerPiRuntime(
+    pi,
+    controller,
+    new GlobalFastModeStore(),
+    new FastModeStartupPolicy(),
+  );
 }

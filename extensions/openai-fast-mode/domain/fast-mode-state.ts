@@ -10,13 +10,13 @@ export interface FastModeStateSnapshot {
   readonly fault?: FastModeFault;
 }
 
-/** Process-local state. It never reads or writes session persistence. */
+/** Process-local state restored by the application without performing I/O. */
 export class InMemoryFastModeState {
   private mode: FastMode = "disabled";
   private fault: FastModeFault | undefined;
 
-  initialize(enabledByFlag: boolean): void {
-    this.mode = enabledByFlag ? "armed" : "disabled";
+  initialize(mode: FastMode): void {
+    this.mode = mode;
     this.fault = undefined;
   }
 
