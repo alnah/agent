@@ -2,7 +2,10 @@ import type { FastCommandParser } from "../domain/fast-command.ts";
 import type { FastModeEligibilityPolicy } from "../domain/fast-mode-policy.ts";
 import type { InMemoryFastModeState } from "../domain/fast-mode-state.ts";
 import type { ModelSnapshot } from "../domain/model-snapshot.ts";
-import type { FastModeView } from "./fast-mode-view.ts";
+import type { FastModePresentation, FastModeView } from "./fast-mode-view.ts";
+
+const PRICING_WARNING =
+  "Fast mode armed. OpenAI priority pricing applies to eligible requests.";
 
 /** Application controller for fast mode lifecycle and request events. */
 export class FastModeController {
@@ -12,8 +15,14 @@ export class FastModeController {
     private readonly eligibilityPolicy: FastModeEligibilityPolicy,
   ) {}
 
-  initialize(enabledByFlag: boolean, _model: ModelSnapshot | undefined): void {
+  initialize(
+    enabledByFlag: boolean,
+    model: ModelSnapshot | undefined,
+    view: FastModeView,
+  ): void {
     this.state.initialize(enabledByFlag);
+    this.render(model, view);
+    if (enabledByFlag) view.notify(PRICING_WARNING, "warning");
   }
 
   handleCommand(
@@ -27,27 +36,24 @@ export class FastModeController {
       return;
     }
 
+    const previous = this.state.snapshot();
     if (parsed.command === "on") this.state.enable();
     if (parsed.command === "off") this.state.disable();
 
-    const state = this.state.snapshot();
-    if (state.mode === "disabled") {
-      view.notify(
-        "Fast mode is disabled; priority injection is not implemented yet.",
-        "info",
-      );
+    const presentation = this.render(model, view);
+    const isActivation =
+      parsed.command === "on" &&
+      (previous.mode === "disabled" || previous.fault !== undefined);
+    if (isActivation) {
+      view.notify(PRICING_WARNING, "warning");
       return;
     }
 
-    const eligibility = this.eligibilityPolicy.evaluate(model);
-    const message = eligibility.eligible
-      ? "Fast mode is armed for this target, but priority injection is not implemented yet."
-      : "Fast mode is waiting for a supported target; priority injection is not implemented yet.";
-    view.notify(message, "info");
+    view.notify(this.describe(presentation), "info");
   }
 
-  handleModelSelection(_model: ModelSnapshot): void {
-    // Presentation updates belong to a later core slice.
+  handleModelSelection(model: ModelSnapshot, view: FastModeView): void {
+    this.render(model, view);
   }
 
   transformProviderPayload(
@@ -57,5 +63,34 @@ export class FastModeController {
     if (this.state.snapshot().mode === "disabled") return payload;
     if (!this.eligibilityPolicy.evaluate(model).eligible) return payload;
     return payload;
+  }
+
+  private derivePresentation(
+    model: ModelSnapshot | undefined,
+  ): FastModePresentation {
+    const state = this.state.snapshot();
+    if (state.fault) return { kind: "fault", message: state.fault.message };
+    if (state.mode === "disabled") return { kind: "hidden" };
+    return this.eligibilityPolicy.evaluate(model).eligible
+      ? { kind: "priority" }
+      : { kind: "waiting" };
+  }
+
+  private render(
+    model: ModelSnapshot | undefined,
+    view: FastModeView,
+  ): FastModePresentation {
+    const presentation = this.derivePresentation(model);
+    view.render(presentation);
+    return presentation;
+  }
+
+  private describe(presentation: FastModePresentation): string {
+    if (presentation.kind === "hidden") return "Fast mode: off.";
+    if (presentation.kind === "waiting") {
+      return "Fast mode: waiting for a supported target.";
+    }
+    if (presentation.kind === "priority") return "Fast mode: priority.";
+    return `Fast mode: error. ${presentation.message}`;
   }
 }

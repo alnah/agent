@@ -49,12 +49,15 @@ export function registerPiRuntime(
     controller.initialize(
       pi.getFlag(FAST_FLAG) === true,
       toModelSnapshot(context.model),
+      new PiViewAdapter(context),
     );
   });
 
-  pi.on("model_select", (event) => {
+  pi.on("model_select", (event, context) => {
     const model = toModelSnapshot(event.model);
-    if (model) controller.handleModelSelection(model);
+    if (model) {
+      controller.handleModelSelection(model, new PiViewAdapter(context));
+    }
   });
 
   pi.on("before_provider_request", (event, context) => {
