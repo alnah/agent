@@ -21,8 +21,8 @@ It is eligible only for these exact targets:
 | `openai` | `openai-responses` | `gpt-5.6-sol` |
 | `openai-codex` | `openai-codex-responses` | `gpt-5.6-sol` |
 
-Other providers, APIs, and models keep the original payload reference and content.
-Fast mode does not change Pi's thinking level or any reasoning payload field.
+Other providers, APIs, and models keep their native request behavior. Fast mode
+does not change Pi's thinking level or any reasoning payload field.
 
 ## Usage
 
@@ -62,47 +62,86 @@ starts disabled unless Pi was launched with `--fast`.
 Model changes do not disable an armed mode. They only switch the derived footer
 and request behavior between `waiting` and `priority`.
 
+The extension installs a native Codex provider wrapper during runtime setup. It
+unregisters that wrapper during session shutdown so reload, replacement, or
+removal restores Pi's builtin provider before a new runtime is composed.
+
 ## Request behavior
+
+### OpenAI Responses
 
 The extension uses `before_provider_request` after Pi builds the provider body.
 For an armed eligible request, it creates a new top-level object, preserves every
 existing JSON field, and sets `service_tier` to `priority`. The original object is
 never mutated.
 
-Normal agent turns and tool continuations pass through this hook in Pi 0.83.0.
-The hook is transport-neutral, but actual SSE and WebSocket acceptance has not
-been validated against the providers.
+### OpenAI Codex Responses
 
-Provider-internal retries remain owned by Pi. The extension does not change retry
-policy or perform a fallback request.
+Codex additionally requires the requested tier in pi-ai's internal stream
+options for response-tier resolution and cost accounting. The extension wraps a
+fresh builtin Codex provider and delegates its model catalog, OAuth, headers,
+transport, retry, streaming, response parsing, usage, and cost behavior.
 
-Compaction and branch-summary requests are excluded in Pi 0.83.0. Those paths
-use the session stream function without the payload hook, so they do not receive
-`service_tier: "priority"`.
+For armed Codex Sol requests, the wrapper calls the native advanced stream with:
+
+```text
+serviceTier: priority
+```
+
+It then runs Pi's payload-hook chain once and enforces final top-level
+`service_tier: "priority"`. Internal options and the transmitted body therefore
+stay aligned. pi-ai remains the sole owner of tier resolution and cost
+multiplication.
+
+Disabled Codex requests and Luna, Terra, or any other Codex model call the
+builtin `streamSimple` path with the original options object.
+
+## Transport, retries, and summaries
+
+The builtin Codex provider retains SSE, WebSocket, cached WebSocket, timeout,
+retry, session, header, OAuth, and response-processing behavior.
+
+Normal agent turns and tool continuations use priority while armed and eligible.
+Codex compaction and branch-summary calls also pass through the provider wrapper,
+so they now receive internal and body priority even though they bypass payload
+hooks in Pi 0.83.0.
+
+OpenAI Responses compaction and branch summaries still bypass the payload hook
+and remain standard tier.
+
+The extension does not change retry policy and never performs a standard-tier
+fallback request.
 
 ## Failure and extension ordering
 
-An invalid eligible provider payload latches `fast: error`, reports a sanitized
-error once, and returns the original value to Pi. Pi can continue that request
-without priority. Use `/fast on` or `/fast off` to clear the fault.
+An invalid eligible payload latches `fast: error` and reports a sanitized error.
+For Codex, the final wrapper enforcement fails the provider stream instead of
+sending a body whose tier disagrees with accounting. Use `/fast on` or
+`/fast off` to clear the fault.
 
-The extension preserves changes made by earlier payload hooks. A later-loaded
-extension can still replace `service_tier`; this extension does not lock the
-field or control extension load order.
+For Codex priority requests, the final wrapper enforcement runs after the normal
+payload-hook chain. Earlier and later hook changes are preserved except for the
+root `service_tier`, which remains `priority`. For OpenAI Responses, a later hook
+can still replace the tier because no direct-provider wrapper is installed.
 
 The extension never logs prompts, complete payloads, OAuth tokens, or secrets.
-It does not register or replace a provider and does not adjust usage or cost.
+It never reads credentials and does not calculate or patch usage costs itself.
 
 ## Validation status
 
-Offline checks confirm discovery, command and flag registration, exact target
-gating, immutable payload decoration, no-op behavior, state transitions, UI
-guards, and fault recovery.
+Offline checks confirm discovery, exact target gating, state transitions, UI
+guards, immutable decoration, fault recovery, native wrapper registration,
+builtin auth/catalog delegation, internal Codex priority before payload hooks,
+and native no-op paths for disabled Sol and armed Luna.
 
-OpenAI Responses and OpenAI Codex Responses have not received controlled live
-requests from this implementation. Applied tier and Pi cost accounting are not
-provider-validated. Do not treat either provider as release-validated until that
-gate is completed.
+A controlled request from the earlier hook-only implementation proved that Codex
+accepted the priority body but Pi accounted it at the standard multiplier. That
+result triggered the native wrapper now present.
+
+The wrapper has not yet received a second controlled live request. Codex applied
+tier and Pi priority accounting remain pending revalidation. OpenAI Responses is
+also not live-validated. Do not treat either provider as release-validated until
+its gate is completed.
 
 ## Disable or remove
 
@@ -118,3 +157,4 @@ this package filter to the package entry:
 ```
 
 Removing `extensions/openai-fast-mode/` from the package removes the extension.
+Reload or restart Pi to restore the builtin Codex provider.
