@@ -61,9 +61,10 @@ export function registerPiRuntime(
   });
 
   pi.on("before_provider_request", (event, context) => {
-    return controller.transformProviderPayload(
+    const result = controller.transformProviderPayload(
       toModelSnapshot(context.model),
       event.payload,
     );
+    return result.payload;
   });
 }

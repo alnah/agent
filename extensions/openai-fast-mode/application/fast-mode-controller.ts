@@ -2,6 +2,10 @@ import type { FastCommandParser } from "../domain/fast-command.ts";
 import type { FastModeEligibilityPolicy } from "../domain/fast-mode-policy.ts";
 import type { InMemoryFastModeState } from "../domain/fast-mode-state.ts";
 import type { ModelSnapshot } from "../domain/model-snapshot.ts";
+import type {
+  PayloadTransformResult,
+  PriorityPayloadDecorator,
+} from "../domain/priority-payload-decorator.ts";
 import type { FastModePresentation, FastModeView } from "./fast-mode-view.ts";
 
 const PRICING_WARNING =
@@ -13,6 +17,7 @@ export class FastModeController {
     private readonly commandParser: FastCommandParser,
     private readonly state: InMemoryFastModeState,
     private readonly eligibilityPolicy: FastModeEligibilityPolicy,
+    private readonly payloadDecorator: PriorityPayloadDecorator,
   ) {}
 
   initialize(
@@ -59,10 +64,15 @@ export class FastModeController {
   transformProviderPayload(
     model: ModelSnapshot | undefined,
     payload: unknown,
-  ): unknown {
-    if (this.state.snapshot().mode === "disabled") return payload;
-    if (!this.eligibilityPolicy.evaluate(model).eligible) return payload;
-    return payload;
+  ): PayloadTransformResult {
+    const state = this.state.snapshot();
+    if (state.mode === "disabled" || state.fault) {
+      return { kind: "unchanged", payload };
+    }
+    if (!this.eligibilityPolicy.evaluate(model).eligible) {
+      return { kind: "unchanged", payload };
+    }
+    return this.payloadDecorator.decorate(payload);
   }
 
   private derivePresentation(
