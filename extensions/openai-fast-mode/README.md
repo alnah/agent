@@ -127,25 +127,21 @@ can still replace the tier because no direct-provider wrapper is installed.
 The extension never logs prompts, complete payloads, OAuth tokens, or secrets.
 It never reads credentials and does not calculate or patch usage costs itself.
 
-## Validation status
+## Maintenance constraints
 
-Offline checks confirm discovery, exact target gating, state transitions, UI
-guards, immutable decoration, fault recovery, native wrapper registration,
-builtin auth/catalog delegation, internal Codex priority before payload hooks,
-and native no-op paths for disabled Sol and armed Luna.
+The Codex adapter depends on the Pi 0.83.0 pi-ai provider contract. In
+particular, it mirrors the native simple-stream reasoning clamp before calling
+the advanced stream. Revalidate this mapping, service-tier accounting, and
+provider lifecycle when upgrading Pi or pi-ai.
 
-A controlled request from the earlier hook-only implementation proved that Codex
-accepted the priority body but Pi accounted it at the standard multiplier. That
-result triggered the native wrapper now present.
+The adapter registers the global `openai-codex` provider ID. Running another
+extension that replaces the same provider is unsupported: registration and
+shutdown order could replace or unregister the other wrapper. Use only one
+`openai-codex` provider owner at a time.
 
-A second controlled live Codex request validated the wrapper with native auto
-transport. The final payload tier was `priority`, the request completed with
-`stopReason: "stop"`, and Pi recorded 1,597 input and 5 output tokens. Catalogue
-rates produce a standard-tier base cost of `$0.008135`; Pi recorded `$0.01627`,
-for the expected priority multiplier of exactly `2.0`.
-
-OpenAI Responses remains pending live validation. Do not treat that direct
-provider as release-validated until its separate gate is completed.
+This extension intentionally has no automated tests, fixtures, mocks, or test
+dependencies. Validation uses static checks, offline provider probes, and
+controlled live requests.
 
 ## Disable or remove
 
