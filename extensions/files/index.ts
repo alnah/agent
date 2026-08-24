@@ -246,7 +246,7 @@ export default function (pi: ExtensionAPI): void {
     },
   });
 
-  pi.registerShortcut("ctrl+shift+f", {
+  pi.registerShortcut("ctrl+shift+e", {
     description: "Reveal the latest referenced file in Finder",
     handler: async (ctx) => {
       await withLatestReference(ctx, async (entry) => {
