@@ -1,6 +1,6 @@
 # Agent
 
-> This is my [Pi](https://github.com/badlogic/pi-mono) config with extensions, skills, prompts, themes, and context files for terminal workflows. It is not a Pi fork. It extends Pi.
+> This is my [Pi](https://github.com/badlogic/pi-mono) config with extensions, skills, prompts, and context files for terminal workflows. It is not a Pi fork. It extends Pi.
 
 ## Why Pi?
 
@@ -54,12 +54,14 @@ Topic 2: if rule 2; else rule 3; then rule 4; no rule 5a, rule 5b, etc.
 | Skill | What it does |
 | --- | --- |
 | `git-workflow/` | Git and GitHub operating rules for status, diffs, commits, sync, PRs, and recovery |
+| `safe-remediation/` | Guardrails for applying audit, migration, security, and architecture recommendations safely |
 | `web-research/` | Web research workflow: Moth search for discovery, Moth browser for fetching and verification |
 
 ### Prompt templates
 
 | Prompt | What it does |
 | --- | --- |
+| `audit-quality.md` | Runs an architecture quality audit using GRASP, ATAM, and ISO/IEC 25010 |
 | `title.md` | Generates a short ISO-prefixed Pi session title |
 
 
@@ -70,6 +72,8 @@ Topic 2: if rule 2; else rule 3; then rule 4; no rule 5a, rule 5b, etc.
 
 ```bash
 git clone https://github.com/alnah/agent.git
+cd agent/extensions
+npm ci
 ```
 
 ### Tell Pi to load it as a local package root
@@ -78,13 +82,18 @@ Add this to `~/.pi/agent/settings.json`:
 
 ```json
 {
-  "packages": ["/absolute/path/to/agent"]
+  "packages": [
+    {
+      "source": "/absolute/path/to/agent",
+      "extensions": ["!extensions/typescript-symbols/index.ts"]
+    }
+  ]
 }
 ```
 
 Pi will auto-discover:
 
-- `extensions/`
+- `extensions/`, except `typescript-symbols/` globally
 - `skills/`
 - `prompts/`
 
@@ -131,7 +140,9 @@ Extension development lives under `extensions/`.
 
 ```bash
 cd extensions
+npm ci
 npm run check
+npx tsc --noEmit
 npm run format
 ```
 
