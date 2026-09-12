@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  extensions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: extensions/package-lock.json
+
+      - name: Install dependencies
+        working-directory: extensions
+        run: npm ci
+
+      - name: Check formatting and lint
+        working-directory: extensions
+        run: npm run check
+
+      - name: Check types
+        working-directory: extensions
+        run: npm run typecheck
