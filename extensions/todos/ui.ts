@@ -1,5 +1,8 @@
-import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
-import { DynamicBorder, getMarkdownTheme } from "@mariozechner/pi-coding-agent";
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import {
+  DynamicBorder,
+  getMarkdownTheme,
+} from "@earendil-works/pi-coding-agent";
 import {
   Container,
   type Focusable,
@@ -16,7 +19,7 @@ import {
   type TUI,
   truncateToWidth,
   visibleWidth,
-} from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-tui";
 import { filterTodos, formatTodoId, isClosedStatus } from "./parsing.ts";
 import { buildRefinePrompt, buildWorkPrompt } from "./prompts.ts";
 

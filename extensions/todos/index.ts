@@ -1,6 +1,5 @@
-import { StringEnum } from "@mariozechner/pi-ai";
-import type { Component, Focusable } from "@mariozechner/pi-tui";
-import { truncateToWidth } from "@mariozechner/pi-tui";
+import type { Component, Focusable } from "@earendil-works/pi-tui";
+import { truncateToWidth } from "@earendil-works/pi-tui";
 import { Type } from "@sinclair/typebox";
 import { createTodoExecutor } from "./executor.ts";
 import { filterTodos, getTodosDir } from "./parsing.ts";
@@ -37,16 +36,16 @@ const TODO_TOOL_PROMPT_GUIDELINES = [
  * intentionally small and maps directly to the executor actions.
  */
 const TodoParams = Type.Object({
-  action: StringEnum([
-    "list",
-    "list-all",
-    "get",
-    "create",
-    "update",
-    "append",
-    "delete",
-    "claim",
-    "release",
+  action: Type.Union([
+    Type.Literal("list"),
+    Type.Literal("list-all"),
+    Type.Literal("get"),
+    Type.Literal("create"),
+    Type.Literal("update"),
+    Type.Literal("append"),
+    Type.Literal("delete"),
+    Type.Literal("claim"),
+    Type.Literal("release"),
   ]),
   id: Type.Optional(
     Type.String({ description: "Todo id (TODO-<hex> or raw hex filename)" }),
