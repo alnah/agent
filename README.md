@@ -56,6 +56,7 @@ Topic 2: if rule 2; else rule 3; then rule 4; no rule 5a, rule 5b, etc.
 | `git-workflow/` | Git and GitHub operating rules for status, diffs, commits, sync, PRs, and recovery |
 | `safe-remediation/` | Guardrails for applying audit, migration, security, and architecture recommendations safely |
 | `web-research/` | Web research workflow: Moth search for discovery, Moth browser for fetching and verification |
+| `release-changelog/` | Changelog format and release notes extraction for any project, independent of release assets |
 
 ### Prompt templates
 
