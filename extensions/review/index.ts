@@ -27,24 +27,7 @@ import {
 } from "./prompting.ts";
 import { showReviewSelector } from "./selector.ts";
 import { getLastAssistantSnapshot, waitForLoopTurnToStart } from "./session.ts";
-import {
-  ANCHOR_TYPE,
-  applyAllPersistedState,
-  getCustomInstructions,
-  getOriginId,
-  getPersistedSessionState,
-  isEndInProgress,
-  isLoopFixingEnabled,
-  isLoopInProgress,
-  persistSettings,
-  STATE_TYPE,
-  setCustomInstructions,
-  setEndInProgress,
-  setLoopFixingEnabled,
-  setLoopInProgress,
-  setOriginId,
-  setWidget,
-} from "./state.ts";
+import { ANCHOR_TYPE, ReviewState, STATE_TYPE } from "./state.ts";
 import {
   getUserFacingHint,
   isLoopCompatibleTarget,
@@ -83,10 +66,11 @@ type EndReviewActionOptions = {
  */
 function setLoopFixingEnabledWithPersistence(
   pi: ExtensionAPI,
+  state: ReviewState,
   enabled: boolean,
 ): void {
-  setLoopFixingEnabled(enabled);
-  persistSettings(pi);
+  state.setLoopFixingEnabled(enabled);
+  state.persistSettings(pi);
 }
 
 /**
@@ -94,10 +78,11 @@ function setLoopFixingEnabledWithPersistence(
  */
 function setCustomInstructionsWithPersistence(
   pi: ExtensionAPI,
+  state: ReviewState,
   instructions: string | undefined,
 ): void {
-  setCustomInstructions(instructions);
-  persistSettings(pi);
+  state.setCustomInstructions(instructions);
+  state.persistSettings(pi);
 }
 
 /**
@@ -109,11 +94,12 @@ function setCustomInstructionsWithPersistence(
 async function executeReview(
   pi: ExtensionAPI,
   ctx: ExtensionCommandContext,
+  state: ReviewState,
   target: ReviewTarget,
   useFreshSession: boolean,
   options?: { includeLocalChanges?: boolean; extraInstruction?: string },
 ): Promise<boolean> {
-  if (getOriginId()) {
+  if (state.getOriginId()) {
     ctx.ui.notify(
       "Already in a review. Use /end-review to finish first.",
       "warning",
@@ -133,7 +119,7 @@ async function executeReview(
       ctx.ui.notify("Failed to determine review origin.", "error");
       return false;
     }
-    setOriginId(originId);
+    state.setOriginId(originId);
 
     const lockedOriginId = originId;
     const entries = ctx.sessionManager.getEntries();
@@ -148,11 +134,11 @@ async function executeReview(
           label: "code-review",
         });
         if (result.cancelled) {
-          setOriginId(undefined);
+          state.setOriginId(undefined);
           return false;
         }
       } catch (error) {
-        setOriginId(undefined);
+        state.setOriginId(undefined);
         ctx.ui.notify(
           `Failed to start review: ${error instanceof Error ? error.message : String(error)}`,
           "error",
@@ -163,8 +149,8 @@ async function executeReview(
       ctx.ui.setEditorText("");
     }
 
-    setOriginId(lockedOriginId);
-    setWidget(ctx, true);
+    state.setOriginId(lockedOriginId);
+    state.setWidget(ctx, true);
 
     pi.appendEntry(STATE_TYPE, {
       active: true,
@@ -174,7 +160,7 @@ async function executeReview(
 
   const fullPrompt = await buildFullReviewPrompt(pi, ctx, target, {
     includeLocalChanges: options?.includeLocalChanges === true,
-    sharedInstructions: getCustomInstructions(),
+    sharedInstructions: state.getCustomInstructions(),
     extraInstruction: options?.extraInstruction,
   });
   const hint = getUserFacingHint(target);
@@ -248,20 +234,21 @@ async function handlePrCheckout(
 function getActiveReviewOrigin(
   pi: ExtensionAPI,
   ctx: ExtensionContext,
+  state: ReviewState,
 ): string | undefined {
-  const currentOriginId = getOriginId();
+  const currentOriginId = state.getOriginId();
   if (currentOriginId) {
     return currentOriginId;
   }
 
-  const state = getPersistedSessionState(ctx);
-  if (state?.active && state.originId) {
-    setOriginId(state.originId);
-    return state.originId;
+  const persisted = state.getPersistedSessionState(ctx);
+  if (persisted?.active && persisted.originId) {
+    state.setOriginId(persisted.originId);
+    return persisted.originId;
   }
 
-  if (state?.active) {
-    setWidget(ctx, false);
+  if (persisted?.active) {
+    state.setWidget(ctx, false);
     pi.appendEntry(STATE_TYPE, { active: false });
     ctx.ui.notify(
       "Review state was missing origin info; cleared review status.",
@@ -275,9 +262,13 @@ function getActiveReviewOrigin(
 /**
  * Clears the active review branch state and widget.
  */
-function clearReviewState(pi: ExtensionAPI, ctx: ExtensionContext): void {
-  setWidget(ctx, false);
-  setOriginId(undefined);
+function clearReviewState(
+  pi: ExtensionAPI,
+  ctx: ExtensionContext,
+  state: ReviewState,
+): void {
+  state.setWidget(ctx, false);
+  state.setOriginId(undefined);
   pi.appendEntry(STATE_TYPE, { active: false });
 }
 
@@ -341,12 +332,13 @@ async function navigateWithSummary(
 async function executeEndReviewAction(
   pi: ExtensionAPI,
   ctx: ExtensionCommandContext,
+  state: ReviewState,
   action: EndReviewAction,
   options: EndReviewActionOptions = {},
 ): Promise<EndReviewActionResult> {
-  const originId = getActiveReviewOrigin(pi, ctx);
+  const originId = getActiveReviewOrigin(pi, ctx, state);
   if (!originId) {
-    if (!getPersistedSessionState(ctx)?.active) {
+    if (!state.getPersistedSessionState(ctx)?.active) {
       ctx.ui.notify(
         "Not in a review branch (use /review first, or review was started in current session mode)",
         "info",
@@ -375,7 +367,7 @@ async function executeEndReviewAction(
       return "error";
     }
 
-    clearReviewState(pi, ctx);
+    clearReviewState(pi, ctx, state);
     if (notifySuccess) {
       ctx.ui.notify("Review complete! Returned to original position.", "info");
     }
@@ -408,7 +400,7 @@ async function executeEndReviewAction(
     return "cancelled";
   }
 
-  clearReviewState(pi, ctx);
+  clearReviewState(pi, ctx, state);
 
   if (action === "returnAndSummarize") {
     if (!ctx.ui.getEditorText().trim()) {
@@ -439,16 +431,17 @@ async function executeEndReviewAction(
 async function runLoopFixingReview(
   pi: ExtensionAPI,
   ctx: ExtensionCommandContext,
+  state: ReviewState,
   target: ReviewTarget,
   extraInstruction?: string,
 ): Promise<void> {
-  if (isLoopInProgress()) {
+  if (state.isLoopInProgress()) {
     ctx.ui.notify("Loop fixing review is already running.", "warning");
     return;
   }
 
-  setLoopInProgress(true);
-  setWidget(ctx, Boolean(getOriginId()));
+  state.setLoopInProgress(true);
+  state.setWidget(ctx, Boolean(state.getOriginId()));
   try {
     ctx.ui.notify(
       "Loop fixing enabled: using Empty branch mode and cycling until no blocking findings remain.",
@@ -457,7 +450,7 @@ async function runLoopFixingReview(
 
     for (let pass = 1; pass <= REVIEW_LOOP_MAX_ITERATIONS; pass++) {
       const reviewBaselineAssistantId = getLastAssistantSnapshot(ctx)?.id;
-      const started = await executeReview(pi, ctx, target, true, {
+      const started = await executeReview(pi, ctx, state, target, true, {
         includeLocalChanges: true,
         extraInstruction,
       });
@@ -517,6 +510,7 @@ async function runLoopFixingReview(
         const finalized = await executeEndReviewAction(
           pi,
           ctx,
+          state,
           "returnAndSummarize",
           {
             showSummaryLoader: true,
@@ -543,6 +537,7 @@ async function runLoopFixingReview(
       const sentFixPrompt = await executeEndReviewAction(
         pi,
         ctx,
+        state,
         "returnAndFix",
         {
           showSummaryLoader: true,
@@ -600,8 +595,8 @@ async function runLoopFixingReview(
       "warning",
     );
   } finally {
-    setLoopInProgress(false);
-    setWidget(ctx, Boolean(getOriginId()));
+    state.setLoopInProgress(false);
+    state.setWidget(ctx, Boolean(state.getOriginId()));
   }
 }
 
@@ -611,13 +606,14 @@ async function runLoopFixingReview(
 async function runEndReview(
   pi: ExtensionAPI,
   ctx: ExtensionCommandContext,
+  state: ReviewState,
 ): Promise<void> {
   if (!ctx.hasUI) {
     ctx.ui.notify("End-review requires interactive mode", "error");
     return;
   }
 
-  if (isLoopInProgress()) {
+  if (state.isLoopInProgress()) {
     ctx.ui.notify(
       "Loop fixing review is running. Wait for it to finish.",
       "info",
@@ -625,12 +621,12 @@ async function runEndReview(
     return;
   }
 
-  if (isEndInProgress()) {
+  if (state.isEndInProgress()) {
     ctx.ui.notify("/end-review is already running", "info");
     return;
   }
 
-  setEndInProgress(true);
+  state.setEndInProgress(true);
   try {
     const choice = await ctx.ui.select("Finish review:", [
       "Return only",
@@ -650,22 +646,24 @@ async function runEndReview(
           ? "returnAndSummarize"
           : "returnOnly";
 
-    await executeEndReviewAction(pi, ctx, action, {
+    await executeEndReviewAction(pi, ctx, state, action, {
       showSummaryLoader: true,
       notifySuccess: true,
     });
   } finally {
-    setEndInProgress(false);
+    state.setEndInProgress(false);
   }
 }
 
 export default function reviewExtension(pi: ExtensionAPI) {
+  const state = new ReviewState();
+
   pi.on("session_start", (_event, ctx) => {
-    applyAllPersistedState(ctx);
+    state.applyAllPersistedState(ctx);
   });
 
   pi.on("session_tree", (_event, ctx) => {
-    applyAllPersistedState(ctx);
+    state.applyAllPersistedState(ctx);
   });
 
   pi.registerCommand("review", {
@@ -677,12 +675,12 @@ export default function reviewExtension(pi: ExtensionAPI) {
         return;
       }
 
-      if (isLoopInProgress()) {
+      if (state.isLoopInProgress()) {
         ctx.ui.notify("Loop fixing review is already running.", "warning");
         return;
       }
 
-      if (getOriginId()) {
+      if (state.getOriginId()) {
         ctx.ui.notify(
           "Already in a review. Use /end-review to finish first.",
           "warning",
@@ -727,13 +725,13 @@ export default function reviewExtension(pi: ExtensionAPI) {
       while (true) {
         if (!target && fromSelector) {
           target = await showReviewSelector(pi, ctx, {
-            loopFixingEnabled: isLoopFixingEnabled(),
-            customInstructions: getCustomInstructions(),
+            loopFixingEnabled: state.isLoopFixingEnabled(),
+            customInstructions: state.getCustomInstructions(),
             setLoopFixingEnabled(enabled) {
-              setLoopFixingEnabledWithPersistence(pi, enabled);
+              setLoopFixingEnabledWithPersistence(pi, state, enabled);
             },
             setCustomInstructions(instructions) {
-              setCustomInstructionsWithPersistence(pi, instructions);
+              setCustomInstructionsWithPersistence(pi, state, instructions);
             },
           });
         }
@@ -743,7 +741,7 @@ export default function reviewExtension(pi: ExtensionAPI) {
           return;
         }
 
-        if (isLoopFixingEnabled() && !isLoopCompatibleTarget(target)) {
+        if (state.isLoopFixingEnabled() && !isLoopCompatibleTarget(target)) {
           ctx.ui.notify("Loop mode does not work with commit review.", "error");
           if (fromSelector) {
             target = null;
@@ -752,8 +750,8 @@ export default function reviewExtension(pi: ExtensionAPI) {
           return;
         }
 
-        if (isLoopFixingEnabled()) {
-          await runLoopFixingReview(pi, ctx, target, extraInstruction);
+        if (state.isLoopFixingEnabled()) {
+          await runLoopFixingReview(pi, ctx, state, target, extraInstruction);
           return;
         }
 
@@ -782,7 +780,7 @@ export default function reviewExtension(pi: ExtensionAPI) {
           useFreshSession = choice === "Empty branch";
         }
 
-        await executeReview(pi, ctx, target, useFreshSession, {
+        await executeReview(pi, ctx, state, target, useFreshSession, {
           extraInstruction,
         });
         return;
@@ -793,7 +791,7 @@ export default function reviewExtension(pi: ExtensionAPI) {
   pi.registerCommand("end-review", {
     description: "Complete review and return to original position",
     handler: async (_args, ctx) => {
-      await runEndReview(pi, ctx);
+      await runEndReview(pi, ctx, state);
     },
   });
 }

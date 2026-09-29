@@ -1,8 +1,8 @@
 /**
  * Review runtime and persistence state.
  *
- * Keeps the active review branch, widget flags, and persisted settings in one
- * place without changing the current review lifecycle or storage format.
+ * One instance per extension factory keeps the active review branch, widget
+ * flags, and persisted settings isolated between sessions.
  */
 
 import type {
@@ -21,12 +21,7 @@ export type SessionState = {
   originId?: string;
 };
 
-/**
- * Persisted review settings shared across sessions.
- *
- * The loop-fixing toggle and custom instructions are restored from session
- * entries so selector defaults survive reloads.
- */
+/** Persisted review settings shared across sessions. */
 export type SettingsState = {
   loopFixingEnabled?: boolean;
   customInstructions?: string;
@@ -36,188 +31,135 @@ export const STATE_TYPE = "review-session";
 export const ANCHOR_TYPE = "review-anchor";
 export const SETTINGS_TYPE = "review-settings";
 
-let originId: string | undefined;
-let endInProgress = false;
-let loopFixingEnabled = false;
-let customInstructions: string | undefined;
-let loopInProgress = false;
+export class ReviewState {
+  private originId: string | undefined;
+  private endInProgress = false;
+  private loopFixingEnabled = false;
+  private customInstructions: string | undefined;
+  private loopInProgress = false;
 
-/**
- * Returns the active review origin leaf id.
- */
-export function getOriginId(): string | undefined {
-  return originId;
-}
-
-/**
- * Replaces the active review origin leaf id.
- */
-export function setOriginId(value: string | undefined): void {
-  originId = value;
-}
-
-/**
- * Returns whether `/end-review` is already running.
- */
-export function isEndInProgress(): boolean {
-  return endInProgress;
-}
-
-/**
- * Marks whether `/end-review` is currently running.
- */
-export function setEndInProgress(value: boolean): void {
-  endInProgress = value;
-}
-
-/**
- * Returns whether loop fixing is enabled for new reviews.
- */
-export function isLoopFixingEnabled(): boolean {
-  return loopFixingEnabled;
-}
-
-/**
- * Updates the loop-fixing default used by the selector and review command.
- */
-export function setLoopFixingEnabled(value: boolean): void {
-  loopFixingEnabled = value;
-}
-
-/**
- * Returns the shared custom review instructions, if any.
- */
-export function getCustomInstructions(): string | undefined {
-  return customInstructions;
-}
-
-/**
- * Replaces the shared custom review instructions.
- *
- * Blank input is normalized to `undefined` so prompts do not include empty
- * instruction blocks.
- */
-export function setCustomInstructions(value: string | undefined): void {
-  customInstructions = value?.trim() || undefined;
-}
-
-/**
- * Returns whether loop fixing is actively running right now.
- */
-export function isLoopInProgress(): boolean {
-  return loopInProgress;
-}
-
-/**
- * Marks whether a loop-fixing cycle is currently running.
- */
-export function setLoopInProgress(value: boolean): void {
-  loopInProgress = value;
-}
-
-/**
- * Persists the current shared review settings to the session timeline.
- */
-export function persistSettings(pi: ExtensionAPI): void {
-  pi.appendEntry(SETTINGS_TYPE, {
-    loopFixingEnabled,
-    customInstructions,
-  });
-}
-
-/**
- * Updates or clears the review widget.
- *
- * The widget text stays byte-for-byte compatible with the current UX so users
- * still see the same status line while reviewing or loop-fixing.
- */
-export function setWidget(ctx: ExtensionContext, active: boolean): void {
-  if (!ctx.hasUI) return;
-  if (!active) {
-    ctx.ui.setWidget("review", undefined);
-    return;
+  getOriginId(): string | undefined {
+    return this.originId;
   }
 
-  ctx.ui.setWidget("review", (_tui, theme) => {
-    const message = loopInProgress
-      ? "Review session active (loop fixing running)"
-      : loopFixingEnabled
-        ? "Review session active (loop fixing enabled), return with /end-review"
-        : "Review session active, return with /end-review";
-    const text = new Text(theme.fg("warning", message), 0, 0);
+  setOriginId(value: string | undefined): void {
+    this.originId = value;
+  }
+
+  isEndInProgress(): boolean {
+    return this.endInProgress;
+  }
+
+  setEndInProgress(value: boolean): void {
+    this.endInProgress = value;
+  }
+
+  isLoopFixingEnabled(): boolean {
+    return this.loopFixingEnabled;
+  }
+
+  setLoopFixingEnabled(value: boolean): void {
+    this.loopFixingEnabled = value;
+  }
+
+  getCustomInstructions(): string | undefined {
+    return this.customInstructions;
+  }
+
+  /** Blank input is normalized to `undefined` so prompts stay clean. */
+  setCustomInstructions(value: string | undefined): void {
+    this.customInstructions = value?.trim() || undefined;
+  }
+
+  isLoopInProgress(): boolean {
+    return this.loopInProgress;
+  }
+
+  setLoopInProgress(value: boolean): void {
+    this.loopInProgress = value;
+  }
+
+  persistSettings(pi: ExtensionAPI): void {
+    pi.appendEntry(SETTINGS_TYPE, {
+      loopFixingEnabled: this.loopFixingEnabled,
+      customInstructions: this.customInstructions,
+    });
+  }
+
+  /** Updates or clears the review status widget. */
+  setWidget(ctx: ExtensionContext, active: boolean): void {
+    if (!ctx.hasUI) return;
+    if (!active) {
+      ctx.ui.setWidget("review", undefined);
+      return;
+    }
+
+    ctx.ui.setWidget("review", (_tui, theme) => {
+      const message = this.loopInProgress
+        ? "Review session active (loop fixing running)"
+        : this.loopFixingEnabled
+          ? "Review session active (loop fixing enabled), return with /end-review"
+          : "Review session active, return with /end-review";
+      const text = new Text(theme.fg("warning", message), 0, 0);
+      return {
+        render(width: number) {
+          return text.render(width);
+        },
+        invalidate() {
+          text.invalidate();
+        },
+      };
+    });
+  }
+
+  /** Reads the newest persisted review-branch state from the current branch. */
+  getPersistedSessionState(ctx: ExtensionContext): SessionState | undefined {
+    let state: SessionState | undefined;
+    for (const entry of ctx.sessionManager.getBranch()) {
+      if (entry.type === "custom" && entry.customType === STATE_TYPE) {
+        state = entry.data as SessionState | undefined;
+      }
+    }
+
+    return state;
+  }
+
+  applyPersistedSessionState(ctx: ExtensionContext): void {
+    const state = this.getPersistedSessionState(ctx);
+
+    if (state?.active && state.originId) {
+      this.originId = state.originId;
+      this.setWidget(ctx, true);
+      return;
+    }
+
+    this.originId = undefined;
+    this.setWidget(ctx, false);
+  }
+
+  /** Reads the newest persisted review settings from the full session history. */
+  getPersistedSettings(ctx: ExtensionContext): SettingsState {
+    let state: SettingsState | undefined;
+    for (const entry of ctx.sessionManager.getEntries()) {
+      if (entry.type === "custom" && entry.customType === SETTINGS_TYPE) {
+        state = entry.data as SettingsState | undefined;
+      }
+    }
+
     return {
-      render(width: number) {
-        return text.render(width);
-      },
-      invalidate() {
-        text.invalidate();
-      },
+      loopFixingEnabled: state?.loopFixingEnabled === true,
+      customInstructions: state?.customInstructions?.trim() || undefined,
     };
-  });
-}
-
-/**
- * Reads the newest persisted review-branch state from the current branch.
- */
-export function getPersistedSessionState(
-  ctx: ExtensionContext,
-): SessionState | undefined {
-  let state: SessionState | undefined;
-  for (const entry of ctx.sessionManager.getBranch()) {
-    if (entry.type === "custom" && entry.customType === STATE_TYPE) {
-      state = entry.data as SessionState | undefined;
-    }
   }
 
-  return state;
-}
-
-/**
- * Applies persisted branch state to the runtime flags and widget.
- */
-export function applyPersistedSessionState(ctx: ExtensionContext): void {
-  const state = getPersistedSessionState(ctx);
-
-  if (state?.active && state.originId) {
-    originId = state.originId;
-    setWidget(ctx, true);
-    return;
+  applyPersistedSettings(ctx: ExtensionContext): void {
+    const state = this.getPersistedSettings(ctx);
+    this.loopFixingEnabled = state.loopFixingEnabled === true;
+    this.customInstructions = state.customInstructions?.trim() || undefined;
   }
 
-  originId = undefined;
-  setWidget(ctx, false);
-}
-
-/**
- * Reads the newest persisted review settings from the full session history.
- */
-export function getPersistedSettings(ctx: ExtensionContext): SettingsState {
-  let state: SettingsState | undefined;
-  for (const entry of ctx.sessionManager.getEntries()) {
-    if (entry.type === "custom" && entry.customType === SETTINGS_TYPE) {
-      state = entry.data as SettingsState | undefined;
-    }
+  applyAllPersistedState(ctx: ExtensionContext): void {
+    this.applyPersistedSettings(ctx);
+    this.applyPersistedSessionState(ctx);
   }
-
-  return {
-    loopFixingEnabled: state?.loopFixingEnabled === true,
-    customInstructions: state?.customInstructions?.trim() || undefined,
-  };
-}
-
-/**
- * Applies persisted settings to the runtime flags.
- */
-export function applyPersistedSettings(ctx: ExtensionContext): void {
-  const state = getPersistedSettings(ctx);
-  loopFixingEnabled = state.loopFixingEnabled === true;
-  customInstructions = state.customInstructions?.trim() || undefined;
-}
-
-/**
- * Reloads both persisted settings and persisted branch state.
- */
-export function applyAllPersistedState(ctx: ExtensionContext): void {
-  applyPersistedSettings(ctx);
-  applyPersistedSessionState(ctx);
 }
