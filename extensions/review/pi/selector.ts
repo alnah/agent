@@ -19,7 +19,8 @@ import {
   Spacer,
   Text,
 } from "@earendil-works/pi-tui";
-import { parseReviewPaths } from "./arguments.ts";
+import { parseReviewPaths } from "../core/arguments.ts";
+import type { ReviewTarget } from "../core/targets.ts";
 import {
   checkoutPr,
   getCurrentBranch,
@@ -31,7 +32,6 @@ import {
   hasUncommittedChanges,
   parsePrReference,
 } from "./git.ts";
-import type { ReviewTarget } from "./targets.ts";
 
 const REVIEW_PRESETS = [
   {

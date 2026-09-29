@@ -11,8 +11,8 @@ import type {
   ExtensionAPI,
   ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
+import type { ReviewTarget } from "../core/targets.ts";
 import { getMergeBase } from "./git.ts";
-import type { ReviewTarget } from "./targets.ts";
 
 const UNCOMMITTED_PROMPT =
   "Review the current code changes (staged, unstaged, and untracked files) and provide prioritized findings.";
