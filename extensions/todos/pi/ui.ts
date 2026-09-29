@@ -26,8 +26,8 @@ import {
   isClosedStatus,
   type TodoFrontMatter,
   type TodoRecord,
-} from "./parsing.ts";
-import { buildRefinePrompt, buildWorkPrompt } from "./prompts.ts";
+} from "../core/parsing.ts";
+import { buildRefinePrompt, buildWorkPrompt } from "../core/prompts.ts";
 
 type Theme = ExtensionContext["ui"]["theme"];
 
