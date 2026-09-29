@@ -1,7 +1,7 @@
 import type {
   ExtensionCommandContext,
   SessionMessageEntry,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 
 /**
  * Formats a session cost total for compact display.

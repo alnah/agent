@@ -9,7 +9,7 @@ import type {
   ExtensionAPI,
   ExtensionContext,
   ToolResultEvent,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import { createWindowHandler } from "./command.ts";
 import { createSkillReadTracker } from "./skills.ts";
 

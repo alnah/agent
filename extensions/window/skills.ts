@@ -5,7 +5,7 @@ import {
   type ExtensionContext,
   isReadToolResult,
   type ToolResultEvent,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import { normalizeReadPath } from "./files.ts";
 
 /**
