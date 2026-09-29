@@ -46,24 +46,38 @@ export function extractLastAssistantText(
   return null;
 }
 
+const CODE_FENCE = /```[\s\S]*?```/g;
+const INLINE_CODE = /`([^`]+)`/g;
+const MARKDOWN_IMAGE = /!\[([^\]]*)\]\([^)]*\)/g;
+const MARKDOWN_LINK = /\[([^\]]+)\]\([^)]*\)/g;
+const HEADING_PREFIX = /^\s{0,3}#{1,6}\s+/gm;
+const BLOCKQUOTE_PREFIX = /^\s{0,3}>\s?/gm;
+const EMPHASIS_MARKS = /[*_~]+/g;
+const LINE_BREAKS = /\r?\n+/g;
+
 function stripMarkdown(text: string): string {
   return text
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
-    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
-    .replace(/^\s{0,3}>\s?/gm, "")
-    .replace(/[*_~]+/g, "")
-    .replace(/\r?\n+/g, " ");
+    .replace(CODE_FENCE, " ")
+    .replace(INLINE_CODE, "$1")
+    .replace(MARKDOWN_IMAGE, "$1")
+    .replace(MARKDOWN_LINK, "$1")
+    .replace(HEADING_PREFIX, "")
+    .replace(BLOCKQUOTE_PREFIX, "")
+    .replace(EMPHASIS_MARKS, "")
+    .replace(LINE_BREAKS, " ");
 }
+
+const OSC_BELL = "\u0007";
+const OSC_ESCAPE = "\u001b";
+const OSC_SEPARATOR = /;/g;
+const WHITESPACE_RUN = /\s+/g;
 
 function sanitizeForOsc(text: string): string {
   return text
-    .replaceAll("\u0007", "")
-    .replaceAll("\u001b", "")
-    .replace(/;/g, "")
-    .replace(/\s+/g, " ")
+    .replaceAll(OSC_BELL, "")
+    .replaceAll(OSC_ESCAPE, "")
+    .replace(OSC_SEPARATOR, "")
+    .replace(WHITESPACE_RUN, " ")
     .trim();
 }
 
