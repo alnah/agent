@@ -1,4 +1,4 @@
-import type { AssistantMessage } from "@mariozechner/pi-ai";
+import type { AssistantMessage, ProviderHeaders } from "@earendil-works/pi-ai";
 import {
   type ExtractedQuestion,
   type ExtractionResult,
@@ -50,7 +50,7 @@ export type ExtractParams = {
   getApiKeyAndHeaders: (
     model: unknown,
   ) => Promise<
-    | { ok: true; apiKey?: string; headers?: Record<string, string> }
+    | { ok: true; apiKey?: string; headers?: ProviderHeaders }
     | { ok: false; error: string }
   >;
   complete: (

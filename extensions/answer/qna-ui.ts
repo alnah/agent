@@ -8,7 +8,7 @@ import {
   truncateToWidth,
   visibleWidth,
   wrapTextWithAnsi,
-} from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-tui";
 import {
   createQuestionnaireController,
   type QuestionnaireController,

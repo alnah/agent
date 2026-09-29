@@ -1,9 +1,9 @@
-import { complete } from "@mariozechner/pi-ai";
+import { complete } from "@earendil-works/pi-ai/compat";
 import {
   BorderedLoader,
   type ExtensionAPI,
   type ExtensionContext,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import {
   type ExtractParams,
   extractQuestionsFromAssistantText,
