@@ -11,6 +11,13 @@ import type {
   ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
+import type { FileEntry } from "../core/models.ts";
+import {
+  debugFiles,
+  formatFailureMessage,
+  formatSuccessMessage,
+  formatUnavailableActionMessage,
+} from "../core/operability.ts";
 import {
   type ActionDeps,
   cleanupPath,
@@ -20,13 +27,6 @@ import {
   runCommand,
   toSafetyOverrides,
 } from "./execution.ts";
-import type { FileEntry } from "./models.ts";
-import {
-  debugFiles,
-  formatFailureMessage,
-  formatSuccessMessage,
-  formatUnavailableActionMessage,
-} from "./operability.ts";
 import { createExecCommand } from "./runtime.ts";
 import {
   createSafetyDeps,

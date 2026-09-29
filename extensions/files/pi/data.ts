@@ -10,13 +10,13 @@ import type {
   ExtensionAPI,
   ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
-import type { FileEntry, GitStatusEntry } from "./models.ts";
+import type { FileEntry, GitStatusEntry } from "../core/models.ts";
 import {
   toCanonicalPath as baseToCanonicalPath,
   toCanonicalPathMaybeMissing as baseToCanonicalPathMaybeMissing,
   formatDisplayPath,
   isPathInside,
-} from "./paths.ts";
+} from "../core/paths.ts";
 import { createExecCommand, type ExecCommand } from "./runtime.ts";
 import {
   collectRecentFileReferences,

@@ -13,7 +13,7 @@ import {
   formatDisplayPath,
   toCanonicalPath,
   toCanonicalPathMaybeMissing,
-} from "./paths.ts";
+} from "../core/paths.ts";
 
 export type ContentBlock = {
   type?: string;

@@ -12,9 +12,9 @@ import type {
   ActionCheckResult,
   EditLoadResult,
   FileEntry,
-} from "./models.ts";
-import { debugFiles } from "./operability.ts";
-import { isPathInside } from "./paths.ts";
+} from "../core/models.ts";
+import { debugFiles } from "../core/operability.ts";
+import { isPathInside } from "../core/paths.ts";
 import {
   createExecCommand,
   defaultFsDeps,

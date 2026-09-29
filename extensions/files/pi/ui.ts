@@ -17,8 +17,12 @@ import {
   Spacer,
   Text,
 } from "@earendil-works/pi-tui";
-import type { ActionAvailability, FileAction, FileEntry } from "./models.ts";
-import { getActionDescriptions } from "./operability.ts";
+import type {
+  ActionAvailability,
+  FileAction,
+  FileEntry,
+} from "../core/models.ts";
+import { getActionDescriptions } from "../core/operability.ts";
 
 export type ActionSelectorOptions = ActionAvailability;
 
