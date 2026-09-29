@@ -8,7 +8,7 @@
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { SessionEntry } from "@mariozechner/pi-coding-agent";
+import type { SessionEntry } from "@earendil-works/pi-coding-agent";
 import {
   formatDisplayPath,
   toCanonicalPath,

@@ -5,9 +5,9 @@
  * docstring plus focused docstrings on the exported UI entry points.
  */
 
-import type { ExtensionContext, Theme } from "@mariozechner/pi-coding-agent";
-import { DynamicBorder } from "@mariozechner/pi-coding-agent";
-import type { SelectItem, SelectListTheme } from "@mariozechner/pi-tui";
+import type { ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
+import { DynamicBorder } from "@earendil-works/pi-coding-agent";
+import type { SelectItem, SelectListTheme } from "@earendil-works/pi-tui";
 import {
   Container,
   fuzzyFilter,
@@ -16,7 +16,7 @@ import {
   SelectList,
   Spacer,
   Text,
-} from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-tui";
 import type { ActionAvailability, FileAction, FileEntry } from "./models.ts";
 import { getActionDescriptions } from "./operability.ts";
 
