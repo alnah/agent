@@ -1,8 +1,23 @@
+import type {
+  ExtensionAPI,
+  ExtensionCommandContext,
+  ExtensionContext,
+  Theme,
+} from "@earendil-works/pi-coding-agent";
 import type { Component, Focusable } from "@earendil-works/pi-tui";
 import { truncateToWidth } from "@earendil-works/pi-tui";
 import { Type } from "@sinclair/typebox";
-import { createTodoExecutor } from "./executor.ts";
-import { filterTodos, getTodosDir } from "./parsing.ts";
+import {
+  createTodoExecutor,
+  type TodoToolDetails,
+  type TodoToolInput,
+} from "./executor.ts";
+import {
+  filterTodos,
+  getTodosDir,
+  type TodoFrontMatter,
+  type TodoRecord,
+} from "./parsing.ts";
 import { buildRefinePrompt, buildWorkPrompt } from "./prompts.ts";
 import {
   ensureTodosDir,
@@ -74,7 +89,7 @@ export { buildRefinePrompt, buildWorkPrompt };
  * Tool execution, session startup, and the command UI should all operate on the
  * same filesystem location, including any `PI_TODO_PATH` override.
  */
-function getProjectTodosDir(ctx) {
+function getProjectTodosDir(ctx: ExtensionContext): string {
   return getTodosDir(ctx.cwd);
 }
 
@@ -84,7 +99,12 @@ function getProjectTodosDir(ctx) {
  * The executor only needs stable session metadata and a timestamp, not the full
  * Pi context object.
  */
-function getToolRuntime(ctx) {
+function getToolRuntime(ctx: ExtensionContext): {
+  sessionId: string | undefined;
+  sessionFile: string | undefined;
+  hasUI: boolean;
+  now: Date;
+} {
   return {
     sessionId: ctx.sessionManager?.getSessionId?.(),
     sessionFile: ctx.sessionManager?.getSessionFile?.(),
@@ -99,9 +119,12 @@ function getToolRuntime(ctx) {
  * The tool call and result renderers often only need static text, so this
  * helper avoids duplicating the same tiny component contract.
  */
-function createTextView(text) {
+function createTextView(text: unknown): {
+  render(width: number): string[];
+  invalidate(): void;
+} {
   return {
-    render(width) {
+    render(width: number) {
       const lines = String(text ?? "").split(/\r?\n/);
       if (typeof width !== "number" || width < 1) return lines;
       return lines.map((line) => truncateToWidth(line, width));
@@ -116,7 +139,7 @@ function createTextView(text) {
  * The UI should expose the action first, then optional id and title fragments,
  * so transcript scanning stays fast.
  */
-function renderTodoToolCall(args, theme) {
+function renderTodoToolCall(args: TodoToolInput, theme: Theme) {
   const parts = [
     theme.fg("toolTitle", theme.bold("todo ")),
     String(args?.action || ""),
@@ -132,13 +155,24 @@ function renderTodoToolCall(args, theme) {
  * Partial results stay intentionally terse, while completed mutations prefer a
  * canonical todo summary when a concrete todo object is available.
  */
-function renderTodoToolResult(result, options, theme) {
+function renderTodoToolResult(
+  result:
+    | {
+        details?: TodoToolDetails;
+        content?: { type?: string; text?: string }[];
+      }
+    | undefined,
+  options: { isPartial?: boolean } | undefined,
+  theme: Theme,
+) {
   if (options?.isPartial)
     return createTextView(theme.fg("muted", "Working..."));
   const todo = result?.details?.todo;
   if (todo) return createTextView(`${todo.id} ${todo.title} [${todo.status}]`);
   const text =
-    result?.content?.find?.((entry) => entry?.type === "text")?.text || "";
+    result?.content?.find?.(
+      (entry: { type?: string; text?: string }) => entry?.type === "text",
+    )?.text || "";
   return createTextView(text);
 }
 
@@ -148,7 +182,7 @@ function renderTodoToolResult(result, options, theme) {
  * The plain terminal path mirrors the selector buckets so assigned, open, and
  * closed work remain easy to scan without the custom UI.
  */
-function buildPlainSummary(todos) {
+function buildPlainSummary(todos: TodoFrontMatter[]): string {
   const assigned = todos.filter(
     (todo) => todo.status === "open" && todo.assigned_to_session,
   );
@@ -156,12 +190,12 @@ function buildPlainSummary(todos) {
     (todo) => todo.status === "open" && !todo.assigned_to_session,
   );
   const closed = todos.filter((todo) => todo.status !== "open");
-  const toLines = (label, items) =>
+  const toLines = (label: string, items: TodoFrontMatter[]) =>
     [
       `${label} (${items.length}):`,
       ...(items.length
         ? items.map(
-            (todo) =>
+            (todo: TodoFrontMatter) =>
               ` ${todo.id.startsWith("TODO-") ? todo.id : `TODO-${todo.id}`} ${todo.title}`,
           )
         : [" none"]),
@@ -180,7 +214,7 @@ function buildPlainSummary(todos) {
  * The command falls back to plain text outside the UI and otherwise opens the
  * selector, action menus, and detail overlay workflow.
  */
-export default function registerTodos(pi) {
+export default function registerTodos(pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
     const todosDir = getProjectTodosDir(ctx);
     await ensureTodosDir(todosDir);
@@ -198,9 +232,16 @@ export default function registerTodos(pi) {
     promptSnippet: TODO_TOOL_PROMPT_SNIPPET,
     promptGuidelines: TODO_TOOL_PROMPT_GUIDELINES,
     parameters: TodoParams,
-    renderCall: renderTodoToolCall,
-    renderResult: renderTodoToolResult,
-    async execute(_toolCallId, input, _signal, _onUpdate, ctx) {
+    renderCall: (args, theme) => renderTodoToolCall(args, theme),
+    renderResult: (result, options, theme) =>
+      renderTodoToolResult(result, options, theme),
+    async execute(
+      _toolCallId: string,
+      input: TodoToolInput,
+      _signal: AbortSignal,
+      _onUpdate: (update: unknown) => void,
+      ctx: ExtensionContext,
+    ) {
       return createTodoExecutor({ todosDir: getProjectTodosDir(ctx) })(
         input,
         getToolRuntime(ctx),
@@ -210,15 +251,15 @@ export default function registerTodos(pi) {
 
   pi.registerCommand("todos", {
     description: "List todos from .pi/todos",
-    handler: async (args, ctx) => {
+    handler: async (args: string, ctx: ExtensionCommandContext) => {
       const todosDir = getProjectTodosDir(ctx);
       const executor = createTodoExecutor({ todosDir });
       const currentSessionId = ctx.sessionManager?.getSessionId?.();
       const searchTerm = String(args || "").trim();
       const allTodos = await listTodos(todosDir);
-      const refreshTodos = async () =>
+      const refreshTodos = async (): Promise<TodoFrontMatter[]> =>
         (await executor({ action: "list-all" }, getToolRuntime(ctx))).details
-          .todos;
+          .todos ?? [];
 
       if (!ctx.hasUI || !ctx.ui?.custom) {
         console.log(buildPlainSummary(filterTodos(allTodos, searchTerm)));
@@ -245,15 +286,17 @@ export default function registerTodos(pi) {
           tui.requestRender();
         };
 
-        const resolveTodoRecord = async (todo) => {
+        const resolveTodoRecord = async (
+          todo: TodoFrontMatter,
+        ): Promise<TodoRecord | undefined> => {
           return (
             await executor({ action: "get", id: todo.id }, getToolRuntime(ctx))
           ).details.todo;
         };
 
-        const openTodoOverlay = async (record) => {
+        const openTodoOverlay = async (record: TodoRecord): Promise<string> => {
           return (
-            (await ctx.ui.custom(
+            (await ctx.ui.custom<string | null>(
               (overlayTui, overlayTheme, overlayKeybindings, overlayDone) =>
                 new TodoDetailOverlayComponent(
                   overlayTui,
@@ -274,13 +317,16 @@ export default function registerTodos(pi) {
           );
         };
 
-        const applyTodoAction = async (record, action) => {
+        const applyTodoAction = async (
+          record: TodoRecord,
+          action: string,
+        ): Promise<"stay" | "exit"> => {
           if (action === "refine") {
             nextPrompt = buildRefinePrompt(
               record.id,
               record.title || "(untitled)",
             );
-            done();
+            done(undefined);
             return "exit";
           }
           if (action === "work") {
@@ -288,7 +334,7 @@ export default function registerTodos(pi) {
               record.id,
               record.title || "(untitled)",
             );
-            done();
+            done(undefined);
             return "exit";
           }
           if (action === "view") return "stay";
@@ -323,7 +369,10 @@ export default function registerTodos(pi) {
           return "stay";
         };
 
-        const handleActionSelection = async (record, action) => {
+        const handleActionSelection = async (
+          record: TodoRecord,
+          action: string,
+        ): Promise<void> => {
           if (action === "view") {
             const overlayAction = await openTodoOverlay(record);
             if (overlayAction === "work") {
@@ -361,8 +410,9 @@ export default function registerTodos(pi) {
           if (result === "stay") setActiveComponent(selector);
         };
 
-        const handleSelect = async (todo) => {
+        const handleSelect = async (todo: TodoFrontMatter): Promise<void> => {
           const record = await resolveTodoRecord(todo);
+          if (!record) return;
           actionMenu = new TodoActionMenuComponent(
             theme,
             record,
@@ -382,12 +432,12 @@ export default function registerTodos(pi) {
           (todo) => {
             void handleSelect(todo);
           },
-          () => done(),
+          () => done(undefined),
           searchTerm || undefined,
           currentSessionId,
           (todo, action) => {
             nextPrompt = quickActionPrompt(todo, action);
-            done();
+            done(undefined);
           },
         );
 

@@ -1,9 +1,35 @@
 import path from "node:path";
 
+export type TodoStatus = "open" | "closed" | "done";
+
+export interface TodoFrontMatter {
+  id: string;
+  title: string;
+  tags: string[];
+  status: TodoStatus;
+  created_at: string;
+  assigned_to_session?: string;
+}
+
+export interface TodoRecord extends TodoFrontMatter {
+  body: string;
+}
+
+/** Loose input accepted by parsing and serialization helpers. */
+export interface TodoInput {
+  id?: unknown;
+  title?: unknown;
+  tags?: unknown;
+  status?: unknown;
+  created_at?: unknown;
+  assigned_to_session?: unknown;
+  body?: unknown;
+}
+
 const TODO_ID_RE = /^[a-f0-9]{8}$/;
 const CLOSED_STATUSES = new Set(["closed", "done"]);
 const DEFAULT_TODOS_DIR = ".pi/todos";
-const DEFAULT_TODO_STATUS = "open";
+const DEFAULT_TODO_STATUS: TodoStatus = "open";
 
 /**
  * Trims a value only when it is already a string.
@@ -11,7 +37,7 @@ const DEFAULT_TODO_STATUS = "open";
  * Parsing helpers accept loose input from JSON and front matter, so they need
  * a small coercion-free primitive that treats non-strings as empty.
  */
-function toTrimmedString(value) {
+function toTrimmedString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
@@ -21,7 +47,7 @@ function toTrimmedString(value) {
  * Blank strings are semantically equivalent to an omitted value for todo
  * metadata such as session assignment.
  */
-function toOptionalString(value) {
+function toOptionalString(value: unknown): string | undefined {
   const text = toTrimmedString(value);
   return text || undefined;
 }
@@ -32,7 +58,7 @@ function toOptionalString(value) {
  * Stored markdown should not accumulate leading blank lines or trailing
  * whitespace noise across repeated writes.
  */
-function trimTodoBody(body) {
+function trimTodoBody(body: unknown): string {
   return typeof body === "string"
     ? body.replace(/^\n+/, "").replace(/\s+$/, "")
     : "";
@@ -44,7 +70,7 @@ function trimTodoBody(body) {
  * Todo files may use either LF or CRLF newlines, and the body should start at
  * the first meaningful content line rather than with an empty spacer.
  */
-function stripFrontMatterBodySeparator(body) {
+function stripFrontMatterBodySeparator(body: string): string {
   if (body.startsWith("\r\n\r\n")) return body.slice(4);
   if (body.startsWith("\n\n")) return body.slice(2);
   if (body.startsWith("\r\n")) return body.slice(2);
@@ -58,7 +84,7 @@ function stripFrontMatterBodySeparator(body) {
  * `PI_TODO_PATH` can override the default relative location, but blank values
  * still fall back to `.pi/todos`.
  */
-export function getTodosDir(cwd) {
+export function getTodosDir(cwd: string): string {
   const relative = process.env.PI_TODO_PATH;
   return path.resolve(cwd, relative?.trim() ? relative : DEFAULT_TODOS_DIR);
 }
@@ -69,7 +95,7 @@ export function getTodosDir(cwd) {
  * The tool accepts `#id`, `TODO-id`, and mixed-case inputs, but storage and
  * validation operate on lowercase eight-character hex ids.
  */
-export function normalizeTodoId(value) {
+export function normalizeTodoId(value: unknown): string {
   if (value == null) return "";
   let text = String(value).trim().toLowerCase();
   if (text.startsWith("#")) text = text.slice(1).trim();
@@ -83,7 +109,7 @@ export function normalizeTodoId(value) {
  * The persisted id stays compact, while CLI and UI output use the clearer
  * `TODO-xxxxxxxx` prefix.
  */
-export function formatTodoId(value) {
+export function formatTodoId(value: unknown): string {
   return `TODO-${normalizeTodoId(value)}`;
 }
 
@@ -93,7 +119,7 @@ export function formatTodoId(value) {
  * Every storage path and mutation route should reject malformed ids early so
  * files cannot escape the todos directory or collide unexpectedly.
  */
-export function validateTodoId(value) {
+export function validateTodoId(value: unknown): string {
   const normalized = normalizeTodoId(value);
   if (!TODO_ID_RE.test(normalized))
     throw new Error(`Invalid todo id: ${value}`);
@@ -106,7 +132,7 @@ export function validateTodoId(value) {
  * Both `closed` and `done` remove the todo from active assignment flows, so
  * callers share one predicate instead of duplicating string checks.
  */
-export function isClosedStatus(status) {
+export function isClosedStatus(status: unknown): boolean {
   return CLOSED_STATUSES.has(String(status || "").toLowerCase());
 }
 
@@ -117,7 +143,7 @@ export function isClosedStatus(status) {
  * strings. This scanner tracks depth and string escaping without parsing the
  * body that follows.
  */
-export function findJsonObjectEnd(content) {
+export function findJsonObjectEnd(content: unknown): number {
   const text = String(content ?? "");
   if (!text.startsWith("{")) return -1;
 
@@ -160,7 +186,7 @@ export function findJsonObjectEnd(content) {
  * Files may start with a BOM or leading blank lines, and those should not stop
  * front-matter detection.
  */
-function findFrontMatterStartIndex(text) {
+function findFrontMatterStartIndex(text: string): number {
   let index = 0;
   if (text.charCodeAt(0) === 0xfeff) index += 1;
 
@@ -188,7 +214,10 @@ function findFrontMatterStartIndex(text) {
  * Malformed or missing front matter should not throw. In those cases the whole
  * file is treated as body text and the front matter is reported as empty.
  */
-export function splitFrontMatter(content) {
+export function splitFrontMatter(content: unknown): {
+  frontMatter: string;
+  body: string;
+} {
   const text = String(content ?? "");
   const start = findFrontMatterStartIndex(text);
   const candidate = text.slice(start);
@@ -206,7 +235,7 @@ export function splitFrontMatter(content) {
  * Only trimmed non-empty strings survive so search and serialization operate on
  * a predictable tag list.
  */
-function normalizeTags(tags) {
+function normalizeTags(tags: unknown): string[] {
   if (!Array.isArray(tags)) return [];
   return tags
     .filter((tag) => typeof tag === "string")
@@ -220,7 +249,7 @@ function normalizeTags(tags) {
  * Unknown values quietly fall back to `open` so malformed front matter does not
  * break the rest of the toolchain.
  */
-function normalizeStatus(status) {
+function normalizeStatus(status: unknown): TodoStatus {
   const value = String(status || DEFAULT_TODO_STATUS).toLowerCase();
   return value === "open" || value === "closed" || value === "done"
     ? value
@@ -233,7 +262,10 @@ function normalizeStatus(status) {
  * Invalid JSON degrades to defaults, but the fallback id is still validated so
  * the resulting todo record always has a safe canonical id.
  */
-export function parseFrontMatter(frontMatter, fallbackId) {
+export function parseFrontMatter(
+  frontMatter: string | undefined,
+  fallbackId: unknown,
+): TodoFrontMatter {
   const safeId = validateTodoId(fallbackId);
   let parsed: unknown;
   try {
@@ -267,7 +299,10 @@ export function parseFrontMatter(frontMatter, fallbackId) {
  * Closed todos cannot remain assigned, so the assignment field is cleared after
  * parsing when the status indicates completed work.
  */
-export function parseTodoContent(content, fallbackId) {
+export function parseTodoContent(
+  content: unknown,
+  fallbackId: unknown,
+): TodoRecord {
   const { frontMatter, body } = splitFrontMatter(String(content ?? ""));
   const todo = parseFrontMatter(frontMatter, fallbackId);
   if (isClosedStatus(todo.status)) todo.assigned_to_session = undefined;
@@ -283,7 +318,7 @@ export function parseTodoContent(content, fallbackId) {
  * Serialization should emit one stable shape regardless of which mutation path
  * produced the todo object.
  */
-function canonicalTodo(todo) {
+function canonicalTodo(todo: TodoInput): TodoRecord {
   const status = normalizeStatus(todo.status);
   const assigned = isClosedStatus(status)
     ? undefined
@@ -305,16 +340,9 @@ function canonicalTodo(todo) {
  * The file always starts with pretty-printed JSON front matter. The body is
  * trimmed into a stable form and omitted entirely when empty.
  */
-export function serializeTodo(input) {
+export function serializeTodo(input: TodoInput): string {
   const todo = canonicalTodo(input);
-  const frontMatter: {
-    id: string;
-    title: string;
-    tags: string[];
-    status: string;
-    created_at: string;
-    assigned_to_session?: string;
-  } = {
+  const frontMatter: TodoFrontMatter = {
     id: todo.id,
     title: todo.title,
     tags: todo.tags,
@@ -335,7 +363,7 @@ export function serializeTodo(input) {
  * Assigned open work should appear before unassigned open work, with closed
  * items grouped last.
  */
-function todoSortBucket(todo) {
+function todoSortBucket(todo: TodoFrontMatter): number {
   if (todo.status === "open" && todo.assigned_to_session) return 0;
   if (todo.status === "open") return 1;
   return 2;
@@ -347,7 +375,7 @@ function todoSortBucket(todo) {
  * The order favors active assigned work first, then other open todos, then
  * closed ones. Ties are broken by creation timestamp and finally id.
  */
-export function sortTodos(todos) {
+export function sortTodos<T extends TodoFrontMatter>(todos: T[]): T[] {
   return [...todos].sort((a, b) => {
     const bucketDiff = todoSortBucket(a) - todoSortBucket(b);
     if (bucketDiff !== 0) return bucketDiff;
@@ -364,7 +392,10 @@ export function sortTodos(todos) {
  * Every query token must appear in the synthesized search haystack built from
  * ids, titles, tags, status, and assignment metadata.
  */
-export function filterTodos(todos, query) {
+export function filterTodos<T extends TodoFrontMatter>(
+  todos: T[],
+  query: unknown,
+): T[] {
   const tokens = String(query || "")
     .toLowerCase()
     .split(/\s+/)

@@ -10,9 +10,6 @@
     "checkJs": false,
     "noEmit": true,
     "strict": true,
-    // TODO: enable after the todos implicit-any pass.
-    "noImplicitAny": false,
-    "useUnknownInCatchVariables": false,
     "skipLibCheck": true,
     "useDefineForClassFields": false,
     "types": ["node"]

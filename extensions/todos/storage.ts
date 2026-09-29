@@ -9,13 +9,25 @@ import {
   serializeTodo,
   sortTodos,
   splitFrontMatter,
+  type TodoFrontMatter,
+  type TodoInput,
+  type TodoRecord,
   validateTodoId,
 } from "./parsing.ts";
 
 const TODO_FILE_SUFFIX = ".md";
 const TODO_MARKDOWN_FILE_RE = /^[a-f0-9]{8}\.md$/;
 const SETTINGS_FILE = "settings.json";
-const DEFAULT_TODO_SETTINGS = Object.freeze({ gc: true, gcDays: 7 });
+
+export interface TodoSettings {
+  gc: boolean;
+  gcDays: number;
+}
+
+const DEFAULT_TODO_SETTINGS: TodoSettings = Object.freeze({
+  gc: true,
+  gcDays: 7,
+});
 
 /**
  * Detects filesystem "not found" errors.
@@ -23,8 +35,8 @@ const DEFAULT_TODO_SETTINGS = Object.freeze({ gc: true, gcDays: 7 });
  * Storage helpers treat missing directories and files as normal absence rather
  * than exceptional corruption.
  */
-function isEnoent(error) {
-  return Boolean(error && error.code === "ENOENT");
+function isEnoent(error: unknown): boolean {
+  return (error as { code?: string } | null)?.code === "ENOENT";
 }
 
 /**
@@ -33,14 +45,18 @@ function isEnoent(error) {
  * Invalid or partial JSON should still yield safe defaults for garbage
  * collection behavior.
  */
-function normalizeTodoSettings(parsed) {
+function normalizeTodoSettings(parsed: unknown): TodoSettings {
+  const record =
+    typeof parsed === "object" && parsed !== null
+      ? (parsed as Record<string, unknown>)
+      : {};
   return {
-    gc: typeof parsed?.gc === "boolean" ? parsed.gc : DEFAULT_TODO_SETTINGS.gc,
+    gc: typeof record.gc === "boolean" ? record.gc : DEFAULT_TODO_SETTINGS.gc,
     gcDays: Math.max(
       0,
       Math.floor(
-        Number.isFinite(parsed?.gcDays)
-          ? parsed.gcDays
+        typeof record.gcDays === "number" && Number.isFinite(record.gcDays)
+          ? record.gcDays
           : DEFAULT_TODO_SETTINGS.gcDays,
       ),
     ),
@@ -53,7 +69,7 @@ function normalizeTodoSettings(parsed) {
  * Settings files, lock files, and macOS AppleDouble sidecars can share the
  * directory, so listing logic accepts only eight-lowercase-hex markdown names.
  */
-function isTodoMarkdownFile(fileName) {
+function isTodoMarkdownFile(fileName: string): boolean {
   return TODO_MARKDOWN_FILE_RE.test(fileName);
 }
 
@@ -63,7 +79,7 @@ function isTodoMarkdownFile(fileName) {
  * Callers already filtered by suffix, so the function only strips the trailing
  * `.md` extension.
  */
-function todoIdFromFileName(fileName) {
+function todoIdFromFileName(fileName: string): string {
   return fileName.slice(0, -TODO_FILE_SUFFIX.length);
 }
 
@@ -73,7 +89,10 @@ function todoIdFromFileName(fileName) {
  * List views only need lightweight metadata and should avoid parsing the full
  * body when possible.
  */
-function parseTodoFrontMatterText(text, fallbackId) {
+function parseTodoFrontMatterText(
+  text: string,
+  fallbackId: string,
+): TodoFrontMatter {
   const { frontMatter } = splitFrontMatter(text);
   return parseFrontMatter(frontMatter, fallbackId);
 }
@@ -83,7 +102,10 @@ function parseTodoFrontMatterText(text, fallbackId) {
  *
  * This async path is used by directory scans that build the todo list.
  */
-async function readTodoFrontMatter(filePath, fallbackId) {
+async function readTodoFrontMatter(
+  filePath: string,
+  fallbackId: string,
+): Promise<TodoFrontMatter> {
   return parseTodoFrontMatterText(
     await fs.readFile(filePath, "utf8"),
     fallbackId,
@@ -96,7 +118,10 @@ async function readTodoFrontMatter(filePath, fallbackId) {
  * Tests and synchronous consumers share the same parsing logic as the async
  * list path.
  */
-function readTodoFrontMatterSync(filePath, fallbackId) {
+function readTodoFrontMatterSync(
+  filePath: string,
+  fallbackId: string,
+): TodoFrontMatter {
   return parseTodoFrontMatterText(
     fsSync.readFileSync(filePath, "utf8"),
     fallbackId,
@@ -109,7 +134,7 @@ function readTodoFrontMatterSync(filePath, fallbackId) {
  * Most entry points can safely call this unconditionally before reading or
  * writing todo files.
  */
-export async function ensureTodosDir(todosDir) {
+export async function ensureTodosDir(todosDir: string): Promise<string> {
   await fs.mkdir(todosDir, { recursive: true });
   return todosDir;
 }
@@ -120,7 +145,7 @@ export async function ensureTodosDir(todosDir) {
  * The id is validated first so path construction stays inside the todos
  * directory.
  */
-export function getTodoPath(todosDir, id) {
+export function getTodoPath(todosDir: string, id: unknown): string {
   return path.join(todosDir, `${validateTodoId(id)}${TODO_FILE_SUFFIX}`);
 }
 
@@ -130,7 +155,9 @@ export function getTodoPath(todosDir, id) {
  * Missing or malformed settings fall back to the default garbage collection
  * policy instead of failing the whole extension.
  */
-export async function readTodoSettings(todosDir) {
+export async function readTodoSettings(
+  todosDir: string,
+): Promise<TodoSettings> {
   try {
     const text = await fs.readFile(path.join(todosDir, SETTINGS_FILE), "utf8");
     return normalizeTodoSettings(JSON.parse(text));
@@ -145,10 +172,10 @@ export async function readTodoSettings(todosDir) {
  * Missing directories behave like an empty todo set. Returned todos are always
  * sorted into the canonical presentation order.
  */
-export async function listTodos(todosDir) {
+export async function listTodos(todosDir: string): Promise<TodoFrontMatter[]> {
   try {
     const entries = await fs.readdir(todosDir, { withFileTypes: true });
-    const todos: unknown[] = [];
+    const todos: TodoFrontMatter[] = [];
     for (const entry of entries) {
       if (!entry.isFile() || !isTodoMarkdownFile(entry.name)) continue;
       const fallbackId = todoIdFromFileName(entry.name);
@@ -168,10 +195,10 @@ export async function listTodos(todosDir) {
  *
  * This mirrors `listTodos()` for consumers that cannot use the async API.
  */
-export function listTodosSync(todosDir) {
+export function listTodosSync(todosDir: string): TodoFrontMatter[] {
   try {
     const entries = fsSync.readdirSync(todosDir, { withFileTypes: true });
-    const todos: unknown[] = [];
+    const todos: TodoFrontMatter[] = [];
     for (const entry of entries) {
       if (!entry.isFile() || !isTodoMarkdownFile(entry.name)) continue;
       const fallbackId = todoIdFromFileName(entry.name);
@@ -192,7 +219,10 @@ export function listTodosSync(todosDir) {
  * Unlike list helpers, this path returns the markdown body together with the
  * metadata.
  */
-export async function readTodoFile(filePath, fallbackId) {
+export async function readTodoFile(
+  filePath: string,
+  fallbackId: string,
+): Promise<TodoRecord> {
   return parseTodoContent(await fs.readFile(filePath, "utf8"), fallbackId);
 }
 
@@ -202,7 +232,10 @@ export async function readTodoFile(filePath, fallbackId) {
  * Missing todo files map to `null` so callers can distinguish absence from real
  * IO failures.
  */
-export async function ensureTodoExists(filePath, fallbackId) {
+export async function ensureTodoExists(
+  filePath: string,
+  fallbackId: string,
+): Promise<TodoRecord | null> {
   try {
     return await readTodoFile(filePath, fallbackId);
   } catch (error) {
@@ -217,7 +250,10 @@ export async function ensureTodoExists(filePath, fallbackId) {
  * Parent directories are created on demand and serialization is delegated to
  * the canonical parser module.
  */
-export async function writeTodoFile(filePath, todo) {
+export async function writeTodoFile(
+  filePath: string,
+  todo: TodoInput,
+): Promise<string> {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, serializeTodo(todo), "utf8");
   return filePath;
@@ -230,10 +266,10 @@ export async function writeTodoFile(filePath, todo) {
  * the function returns the ids that were deleted.
  */
 export async function garbageCollectTodos(
-  todosDir,
-  settings,
-  now = new Date(),
-) {
+  todosDir: string,
+  settings: TodoSettings | undefined,
+  now: Date = new Date(),
+): Promise<string[]> {
   if (!settings?.gc) return [];
   const cutoffMs =
     now.getTime() - Math.max(0, settings.gcDays) * 24 * 60 * 60 * 1000;

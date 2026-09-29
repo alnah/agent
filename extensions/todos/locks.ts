@@ -18,7 +18,7 @@ type LockOptions = {
  * Lock files live beside the markdown todos so concurrent processes can guard
  * access without any extra coordination service.
  */
-export function getLockPath(todosDir, id) {
+export function getLockPath(todosDir: string, id: unknown): string {
   return path.join(todosDir, `${validateTodoId(id)}.lock.json`);
 }
 
@@ -50,7 +50,10 @@ function buildLockPayload(id: string, options: LockOptions) {
  * Corrupt JSON should not prevent stale-lock recovery, so invalid payloads are
  * treated as empty metadata while the file stats remain available.
  */
-async function readLockInfo(lockPath) {
+async function readLockInfo(lockPath: string): Promise<{
+  info: Record<string, unknown>;
+  stats: Awaited<ReturnType<typeof fs.stat>>;
+}> {
   const [raw, stats] = await Promise.all([
     fs.readFile(lockPath, "utf8"),
     fs.stat(lockPath),
@@ -77,7 +80,7 @@ export async function acquireLock(
   todosDir: string,
   id: string,
   options: LockOptions = {},
-) {
+): Promise<() => Promise<void>> {
   await fs.mkdir(todosDir, { recursive: true });
   const lockPath = getLockPath(todosDir, id);
   const payload = buildLockPayload(id, options);
@@ -92,7 +95,7 @@ export async function acquireLock(
     const nowMs = (
       options.now instanceof Date ? options.now : new Date()
     ).getTime();
-    const ageMs = Math.max(0, nowMs - stats.mtimeMs);
+    const ageMs = Math.max(0, nowMs - Number(stats.mtimeMs));
     const sessionText = info.session ? ` by session ${info.session}` : "";
 
     if (ageMs <= LOCK_TTL_MS) {

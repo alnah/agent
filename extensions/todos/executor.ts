@@ -7,6 +7,9 @@ import {
   formatTodoId,
   getTodosDir,
   isClosedStatus,
+  type TodoFrontMatter,
+  type TodoRecord,
+  type TodoStatus,
   validateTodoId,
 } from "./parsing.ts";
 import {
@@ -41,6 +44,37 @@ type TodoExecutorOptions = {
   queueFileMutation?: QueueFileMutation;
   tempDir?: string;
 };
+
+/** Loose tool input after Pi's parameter validation. */
+export type TodoToolInput = {
+  action?: unknown;
+  id?: unknown;
+  title?: unknown;
+  tags?: unknown;
+  status?: unknown;
+  body?: unknown;
+  force?: unknown;
+};
+
+export type TodoToolDetails = {
+  action?: string;
+  todos?: TodoFrontMatter[];
+  todo?: TodoRecord;
+  truncation?: { filePath: string };
+  removed?: string[];
+  currentSessionId?: string;
+};
+
+export type TodoToolResult = {
+  content: { type: "text"; text: string }[];
+  details: TodoToolDetails;
+};
+
+function toTodoStatus(value: unknown, fallback: TodoStatus): TodoStatus {
+  return value === "open" || value === "closed" || value === "done"
+    ? value
+    : fallback;
+}
 
 /**
  * Provides the default mutation queue implementation.
@@ -86,7 +120,7 @@ function ensureSessionId(runtime: TodoRuntime) {
  * Mutations should not preserve accidental leading blank lines or trailing
  * whitespace from user prompts.
  */
-function cleanBodyInput(body) {
+function cleanBodyInput(body: unknown): string {
   return typeof body === "string"
     ? body.replace(/^\n+/, "").replace(/\s+$/, "")
     : "";
@@ -98,7 +132,7 @@ function cleanBodyInput(body) {
  * Tool parameters are loosely typed at runtime, so tag handling strips out any
  * non-string entries before persistence.
  */
-function filterStringList(values) {
+function filterStringList(values: unknown): string[] {
   return Array.isArray(values)
     ? values.filter((value) => typeof value === "string")
     : [];
@@ -110,10 +144,10 @@ function filterStringList(values) {
  * The helper keeps exactly one blank line between existing and new content and
  * preserves the original body unchanged when the addition is empty.
  */
-function appendBody(existingBody, addition) {
+function appendBody(existingBody: unknown, addition: unknown): string {
   const left = String(existingBody || "").replace(/\s+$/, "");
   const right = cleanBodyInput(addition);
-  if (!right) return existingBody;
+  if (!right) return typeof existingBody === "string" ? existingBody : "";
   return left ? `${left}\n\n${right}\n` : `${right}\n`;
 }
 
@@ -122,7 +156,7 @@ function appendBody(existingBody, addition) {
  *
  * Result text consistently includes the formatted id and title when present.
  */
-function summarizeTodo(todo) {
+function summarizeTodo(todo: { id: unknown; title: unknown }): string {
   return `${formatTodoId(todo.id)} ${todo.title}`.trim();
 }
 
@@ -132,7 +166,7 @@ function summarizeTodo(todo) {
  * The executor retries several times against the filesystem before giving up so
  * id collisions remain extremely unlikely without hiding persistent failures.
  */
-async function createUniqueTodoId(todosDir) {
+async function createUniqueTodoId(todosDir: string): Promise<string> {
   for (let i = 0; i < 32; i += 1) {
     const id = crypto.randomBytes(4).toString("hex");
     const existing = await ensureTodoExists(getTodoPath(todosDir, id), id);
@@ -147,7 +181,10 @@ async function createUniqueTodoId(todosDir) {
  * Large `get` results follow the same truncation contract as other Pi tools by
  * persisting the full payload outside the transcript.
  */
-async function writeTempOutput(text, tempDir) {
+async function writeTempOutput(
+  text: string,
+  tempDir: string | undefined,
+): Promise<string> {
   const baseDir = tempDir || os.tmpdir();
   await fs.mkdir(baseDir, { recursive: true });
   const filePath = path.join(
@@ -164,7 +201,10 @@ async function writeTempOutput(text, tempDir) {
  * The function enforces both line and byte caps. When truncation happens it
  * saves the full content to a temp file and returns its location.
  */
-async function maybeTruncateText(text, tempDir) {
+async function maybeTruncateText(
+  text: string,
+  tempDir: string | undefined,
+): Promise<{ text: string; truncation: { filePath: string } | undefined }> {
   const lines = String(text).split("\n");
   const withinLines =
     lines.length <= MAX_LINES ? lines : lines.slice(0, MAX_LINES);
@@ -189,7 +229,7 @@ async function maybeTruncateText(text, tempDir) {
  *
  * Empty results use a dedicated message instead of returning a blank string.
  */
-function formatListText(todos) {
+function formatListText(todos: TodoFrontMatter[]): string {
   return todos.length
     ? todos.map((todo) => `- ${formatTodoId(todo.id)} ${todo.title}`).join("\n")
     : "No todos.";
@@ -201,7 +241,11 @@ function formatListText(todos) {
  * Every action returns text content plus structured details so both humans and
  * callers can consume the outcome.
  */
-function makeResult(action, text, details) {
+function makeResult(
+  action: string,
+  text: string,
+  details: TodoToolDetails,
+): TodoToolResult {
   return {
     content: [{ type: "text", text }],
     details: { action, ...details },
@@ -213,7 +257,7 @@ function makeResult(action, text, details) {
  *
  * Mutation paths all need the same missing-todo behavior and error wording.
  */
-async function requireTodo(filePath, id) {
+async function requireTodo(filePath: string, id: string): Promise<TodoRecord> {
   const todo = await ensureTodoExists(filePath, id);
   if (!todo) throw new Error(`Todo ${formatTodoId(id)} not found`);
   return todo;
@@ -255,7 +299,10 @@ export function createTodoExecutor(options: TodoExecutorOptions) {
 
   if (!todosDir) throw new Error("todosDir required");
 
-  return async function execute(input, runtimeInput = {}) {
+  return async function execute(
+    input: TodoToolInput,
+    runtimeInput: TodoRuntime = {},
+  ): Promise<TodoToolResult> {
     const runtime = makeRuntimeContext(runtimeInput);
     await ensureTodosDir(todosDir);
     const action = String(input?.action || "");
@@ -295,10 +342,7 @@ export function createTodoExecutor(options: TodoExecutorOptions) {
         id,
         title,
         tags: filterStringList(input.tags),
-        status:
-          input.status === "closed" || input.status === "done"
-            ? input.status
-            : "open",
+        status: toTodoStatus(input.status, "open"),
         created_at: runtime.now.toISOString(),
         body: cleanBodyInput(input.body),
       };
@@ -325,8 +369,7 @@ export function createTodoExecutor(options: TodoExecutorOptions) {
             tags: Array.isArray(input.tags)
               ? filterStringList(input.tags)
               : current.tags,
-            status:
-              typeof input.status === "string" ? input.status : current.status,
+            status: toTodoStatus(input.status, current.status),
             body:
               typeof input.body === "string"
                 ? cleanBodyInput(input.body)

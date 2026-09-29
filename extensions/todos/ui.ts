@@ -20,20 +20,16 @@ import {
   truncateToWidth,
   visibleWidth,
 } from "@earendil-works/pi-tui";
-import { filterTodos, formatTodoId, isClosedStatus } from "./parsing.ts";
+import {
+  filterTodos,
+  formatTodoId,
+  isClosedStatus,
+  type TodoFrontMatter,
+  type TodoRecord,
+} from "./parsing.ts";
 import { buildRefinePrompt, buildWorkPrompt } from "./prompts.ts";
 
 type Theme = ExtensionContext["ui"]["theme"];
-
-type TodoRecord = {
-  id: string;
-  title: string;
-  tags: string[];
-  status: string;
-  created_at?: string;
-  assigned_to_session?: string;
-  body?: string;
-};
 
 type TodoQuickAction = "work" | "refine";
 type TodoMenuAction =
@@ -85,7 +81,7 @@ function normalizeSelectKey(keyData: string): string {
  */
 function renderAssignmentSuffix(
   theme: Theme,
-  todo: TodoRecord,
+  todo: TodoFrontMatter,
   currentSessionId?: string,
 ): string {
   if (!todo.assigned_to_session) return "";
@@ -101,7 +97,7 @@ function renderAssignmentSuffix(
  * Empty titles fall back to a placeholder so list rows and prompts stay
  * readable.
  */
-function getTodoTitle(todo: TodoRecord): string {
+function getTodoTitle(todo: TodoFrontMatter): string {
   return todo.title || "(untitled)";
 }
 
@@ -111,7 +107,7 @@ function getTodoTitle(todo: TodoRecord): string {
  * Missing status values are treated as `open`, which matches the storage
  * default.
  */
-function getTodoStatus(todo: TodoRecord): string {
+function getTodoStatus(todo: TodoFrontMatter): string {
   return todo.status || "open";
 }
 
@@ -127,13 +123,13 @@ export class TodoSelectorComponent extends Container implements Focusable {
   private readonly theme: Theme;
   private readonly keybindings: KeybindingsManager;
   private readonly currentSessionId?: string;
-  private allTodos: TodoRecord[];
-  private filteredTodos: TodoRecord[];
+  private allTodos: TodoFrontMatter[];
+  private filteredTodos: TodoFrontMatter[];
   private selectedIndex: number;
-  private readonly onSelectCallback: (todo: TodoRecord) => void;
+  private readonly onSelectCallback: (todo: TodoFrontMatter) => void;
   private readonly onCancelCallback: () => void;
   private readonly onQuickAction?: (
-    todo: TodoRecord,
+    todo: TodoFrontMatter,
     action: TodoQuickAction,
   ) => void;
   private readonly headerText: Text;
@@ -146,12 +142,12 @@ export class TodoSelectorComponent extends Container implements Focusable {
     tui: TUI,
     theme: Theme,
     keybindings: KeybindingsManager,
-    todos: TodoRecord[],
-    onSelect: (todo: TodoRecord) => void,
+    todos: TodoFrontMatter[],
+    onSelect: (todo: TodoFrontMatter) => void,
     onCancel: () => void,
     initialSearchInput?: string,
     currentSessionId?: string,
-    onQuickAction?: (todo: TodoRecord, action: TodoQuickAction) => void,
+    onQuickAction?: (todo: TodoFrontMatter, action: TodoQuickAction) => void,
   ) {
     super();
     this.tui = tui;
@@ -204,7 +200,7 @@ export class TodoSelectorComponent extends Container implements Focusable {
     this.searchInput.focused = value;
   }
 
-  setTodos(todos: TodoRecord[]): void {
+  setTodos(todos: TodoFrontMatter[]): void {
     this.allTodos = todos;
     this.updateHeader();
     this.applyFilter(this.searchInput.getValue());
@@ -596,7 +592,7 @@ export class TodoDetailOverlayComponent {
     lines.push("");
     lines.push(this.buildActionLine(innerWidth));
 
-    const borderColor = (text) => this.theme.fg("borderMuted", text);
+    const borderColor = (text: string) => this.theme.fg("borderMuted", text);
     const top = borderColor(`┌${"─".repeat(innerWidth)}┐`);
     const bottom = borderColor(`└${"─".repeat(innerWidth)}┘`);
     const framed = lines.map((line) => {
@@ -684,7 +680,7 @@ export class TodoDetailOverlayComponent {
  * that maps the action to the correct prompt builder.
  */
 export function quickActionPrompt(
-  todo: TodoRecord,
+  todo: TodoFrontMatter,
   action: TodoQuickAction,
 ): string {
   return action === "refine"
