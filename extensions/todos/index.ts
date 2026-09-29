@@ -1,4 +1,5 @@
 import { StringEnum } from "@mariozechner/pi-ai";
+import type { Component, Focusable } from "@mariozechner/pi-tui";
 import { truncateToWidth } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 import { createTodoExecutor } from "./executor.ts";
@@ -225,16 +226,18 @@ export default function registerTodos(pi) {
         return;
       }
 
-      let nextPrompt = null;
+      let nextPrompt: string | null = null;
       let pendingUiAction = Promise.resolve();
       await ctx.ui.custom((tui, theme, keybindings, done) => {
-        let selector = null;
-        let actionMenu = null;
-        let deleteConfirm = null;
-        let activeComponent = null;
+        type ActiveComponent = Component &
+          Partial<Focusable> & { getSearchValue?: () => string };
+        let selector: TodoSelectorComponent | null = null;
+        let actionMenu: TodoActionMenuComponent | null = null;
+        let deleteConfirm: TodoDeleteConfirmComponent | null = null;
+        let activeComponent: ActiveComponent | null = null;
         let wrapperFocused = false;
 
-        const setActiveComponent = (component) => {
+        const setActiveComponent = (component: ActiveComponent | null) => {
           if (activeComponent && "focused" in activeComponent)
             activeComponent.focused = false;
           activeComponent = component;

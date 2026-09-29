@@ -121,6 +121,7 @@ export default function loopExtension(pi: ExtensionAPI): void {
     if (!loopState.active || !loopState.mode || !loopState.prompt) return;
     if (ctx.hasPendingMessages()) return;
 
+    const prompt = loopState.prompt;
     const loopCount = (loopState.loopCount ?? 0) + 1;
     loopState = { ...loopState, loopCount };
     persistState(pi, loopState);
@@ -129,7 +130,7 @@ export default function loopExtension(pi: ExtensionAPI): void {
     pi.sendMessage(
       {
         customType: "loop",
-        content: loopState.prompt,
+        content: prompt,
         display: true,
       },
       {

@@ -5,9 +5,9 @@
  * docstring plus focused docstrings on the exported UI entry points.
  */
 
-import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionContext, Theme } from "@mariozechner/pi-coding-agent";
 import { DynamicBorder } from "@mariozechner/pi-coding-agent";
-import type { SelectItem } from "@mariozechner/pi-tui";
+import type { SelectItem, SelectListTheme } from "@mariozechner/pi-tui";
 import {
   Container,
   fuzzyFilter,
@@ -27,9 +27,7 @@ export type FileSelectionResult = {
   quickAction: "diff" | null;
 };
 
-const createListTheme = (theme: {
-  fg: (color: string, text: string) => string;
-}) => ({
+const createListTheme = (theme: Theme): SelectListTheme => ({
   selectedPrefix: (text: string) => theme.fg("accent", text),
   selectedText: (text: string) => theme.fg("accent", text),
   description: (text: string) => theme.fg("muted", text),

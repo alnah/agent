@@ -237,7 +237,7 @@ async function mutateTodoFile<T>(
   if (!result) {
     throw new Error(`Todo mutation produced no result for ${filePath}`);
   }
-  return result.value;
+  return (result as { value: T }).value;
 }
 
 /**

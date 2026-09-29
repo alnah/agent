@@ -9,11 +9,12 @@
     "allowJs": true,
     "checkJs": false,
     "noEmit": true,
-    "strict": false,
+    "strict": true,
+    // TODO: enable after the todos implicit-any pass.
     "noImplicitAny": false,
+    "useUnknownInCatchVariables": false,
     "skipLibCheck": true,
     "useDefineForClassFields": false,
-    "useUnknownInCatchVariables": false,
     "types": ["node"]
   },
   "include": ["**/*.ts", "**/*.js"],

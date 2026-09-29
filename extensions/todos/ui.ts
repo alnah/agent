@@ -583,7 +583,7 @@ export class TodoDetailOverlayComponent {
       this.scrollOffset,
       this.scrollOffset + contentHeight,
     );
-    const lines = [];
+    const lines: string[] = [];
     lines.push(this.buildTitleLine(innerWidth));
     lines.push(this.buildMetaLine(innerWidth));
     lines.push("");

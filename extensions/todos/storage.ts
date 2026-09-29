@@ -148,7 +148,7 @@ export async function readTodoSettings(todosDir) {
 export async function listTodos(todosDir) {
   try {
     const entries = await fs.readdir(todosDir, { withFileTypes: true });
-    const todos = [];
+    const todos: unknown[] = [];
     for (const entry of entries) {
       if (!entry.isFile() || !isTodoMarkdownFile(entry.name)) continue;
       const fallbackId = todoIdFromFileName(entry.name);
@@ -171,7 +171,7 @@ export async function listTodos(todosDir) {
 export function listTodosSync(todosDir) {
   try {
     const entries = fsSync.readdirSync(todosDir, { withFileTypes: true });
-    const todos = [];
+    const todos: unknown[] = [];
     for (const entry of entries) {
       if (!entry.isFile() || !isTodoMarkdownFile(entry.name)) continue;
       const fallbackId = todoIdFromFileName(entry.name);
@@ -237,7 +237,7 @@ export async function garbageCollectTodos(
   if (!settings?.gc) return [];
   const cutoffMs =
     now.getTime() - Math.max(0, settings.gcDays) * 24 * 60 * 60 * 1000;
-  const removed = [];
+  const removed: string[] = [];
 
   for (const todo of await listTodos(todosDir)) {
     if (!isClosedStatus(todo.status)) continue;

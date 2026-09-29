@@ -85,7 +85,8 @@ export async function acquireLock(
   try {
     await fs.writeFile(lockPath, payload, { flag: "wx" });
   } catch (error) {
-    if (!error || error.code !== "EEXIST") throw error;
+    const code = (error as { code?: string } | null)?.code;
+    if (code !== "EEXIST") throw error;
 
     const { info, stats } = await readLockInfo(lockPath);
     const nowMs = (

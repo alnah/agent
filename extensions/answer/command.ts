@@ -5,6 +5,7 @@ import {
   type ExtensionContext,
 } from "@mariozechner/pi-coding-agent";
 import {
+  type ExtractParams,
   extractQuestionsFromAssistantText,
   heuristicExtractQuestions,
 } from "./extraction.ts";
@@ -22,7 +23,7 @@ import { QnAComponent } from "./qna-ui.ts";
  * assistant messages and should explain the exact recovery path.
  */
 export function notifyForAssistantTextError(
-  ctx: { ui: { notify(message: string, level: string): void } },
+  ctx: ExtensionContext,
   result: LastAssistantTextResult,
 ) {
   if (result.ok) return;
@@ -74,7 +75,7 @@ export function createAnswerHandler(
           const loader = new BorderedLoader(
             tui,
             theme,
-            `Extracting questions using ${extractionModel.id ?? ctx.model.id}...`,
+            `Extracting questions using ${extractionModel.id}...`,
           );
           loader.onAbort = () => done(null);
 
@@ -86,7 +87,7 @@ export function createAnswerHandler(
               ctx.modelRegistry.getApiKeyAndHeaders(
                 model as typeof extractionModel,
               ),
-            complete,
+            complete: complete as ExtractParams["complete"],
             now: () => Date.now(),
             signal: loader.signal,
           })

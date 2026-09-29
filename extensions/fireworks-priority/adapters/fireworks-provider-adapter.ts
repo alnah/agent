@@ -71,14 +71,15 @@ function createPriorityPayloadHook(
   };
 }
 
-function withPriorityOptions<T extends PayloadOptions>(
+function withPriorityOptions<T extends object>(
   options: T | undefined,
   state: InMemoryPriorityModeState,
   decorator: PriorityPayloadDecorator,
 ): T {
+  const original = (options as PayloadOptions | undefined)?.onPayload;
   return {
     ...(options ?? {}),
-    onPayload: createPriorityPayloadHook(options?.onPayload, state, decorator),
+    onPayload: createPriorityPayloadHook(original, state, decorator),
   } as T;
 }
 
