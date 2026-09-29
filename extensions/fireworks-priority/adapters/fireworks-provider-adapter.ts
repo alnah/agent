@@ -1,0 +1,186 @@
+import type {
+  Api,
+  AssistantMessageEventStream,
+  Context,
+  Model,
+  Provider,
+  SimpleStreamOptions,
+  StreamOptions,
+} from "@earendil-works/pi-ai";
+import { builtinProviders } from "@earendil-works/pi-ai/providers/all";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { scalePriorityCost } from "../domain/priority-cost.ts";
+import type { PriorityEligibilityPolicy } from "../domain/priority-eligibility-policy.ts";
+import type { InMemoryPriorityModeState } from "../domain/priority-mode-state.ts";
+import type { PriorityPayloadDecorator } from "../domain/priority-payload-decorator.ts";
+
+const FIREWORKS_PROVIDER_ID = "fireworks";
+
+type PayloadHook = (payload: unknown, model: unknown) => unknown;
+
+interface PayloadOptions {
+  onPayload?: PayloadHook;
+}
+
+/** Provider members added after pi-ai 0.85.1, delegated when present. */
+interface ProviderExtensions {
+  getAllModels?: () => unknown;
+  filterAllModels?: (models: unknown, credential: unknown) => unknown;
+}
+
+function isFireworksProvider(provider: Provider): boolean {
+  // Only the provider identity and a non-empty chat catalog are required. Per-API
+  // support stays in PriorityEligibilityPolicy so a future catalog addition with
+  // another API cannot break extension loading.
+  return (
+    provider.id === FIREWORKS_PROVIDER_ID && provider.getModels().length > 0
+  );
+}
+
+/** Returns a fresh builtin provider so wrappers never stack across reloads. */
+export function getBuiltinFireworksProvider(): Provider {
+  const provider = builtinProviders().find(
+    (candidate) => candidate.id === FIREWORKS_PROVIDER_ID,
+  );
+  if (!provider || !isFireworksProvider(provider)) {
+    throw new Error("Builtin Fireworks provider contract is unavailable");
+  }
+  return provider;
+}
+
+function createPriorityPayloadHook(
+  original: PayloadHook | undefined,
+  state: InMemoryPriorityModeState,
+  decorator: PriorityPayloadDecorator,
+): PayloadHook {
+  return async (payload, model) => {
+    const replaced = original ? await original(payload, model) : undefined;
+    const candidate = replaced === undefined ? payload : replaced;
+    const result = decorator.decorate(candidate);
+    if (result.kind === "failure") {
+      state.setFault(result.fault);
+      throw new Error(result.fault.message);
+    }
+    return result.payload;
+  };
+}
+
+function withPriorityOptions<T extends PayloadOptions>(
+  options: T | undefined,
+  state: InMemoryPriorityModeState,
+  decorator: PriorityPayloadDecorator,
+): T {
+  return {
+    ...(options ?? {}),
+    onPayload: createPriorityPayloadHook(options?.onPayload, state, decorator),
+  } as T;
+}
+
+function withPriorityCost(model: Model<Api>, multiplier: number): Model<Api> {
+  return { ...model, cost: scalePriorityCost(model.cost, multiplier) };
+}
+
+/** Delegates all native behavior and adds priority only for armed targets. */
+export function createPriorityFireworksProvider(
+  base: Provider,
+  state: InMemoryPriorityModeState,
+  policy: PriorityEligibilityPolicy,
+  decorator: PriorityPayloadDecorator,
+): Provider {
+  const refreshModels = base.refreshModels?.bind(base);
+  const filterModels = base.filterModels?.bind(base);
+  const fetchDeferred = base.fetchDeferred?.bind(base);
+  const cancelDeferred = base.cancelDeferred?.bind(base);
+  const baseExtensions = base as ProviderExtensions;
+  const getAllModels = baseExtensions.getAllModels?.bind(base);
+  const filterAllModels = baseExtensions.filterAllModels?.bind(base);
+
+  const multiplierFor = (model: Model<Api>): number | undefined => {
+    const snapshot = state.snapshot();
+    if (snapshot.mode !== "armed" || snapshot.fault) return undefined;
+    const result = policy.evaluate({
+      provider: model.provider,
+      api: model.api,
+      modelId: model.id,
+    });
+    return result.eligible ? result.multiplier : undefined;
+  };
+
+  const provider: Provider = {
+    id: base.id,
+    name: base.name,
+    baseUrl: base.baseUrl,
+    headers: base.headers,
+    auth: base.auth,
+    getModels: () => base.getModels(),
+    refreshModels: refreshModels
+      ? (context) => refreshModels(context)
+      : undefined,
+    filterModels: filterModels
+      ? (models, credential) => filterModels(models, credential)
+      : undefined,
+    stream(
+      model: Model<Api>,
+      context: Context,
+      options?: StreamOptions,
+    ): AssistantMessageEventStream {
+      const multiplier = multiplierFor(model);
+      if (multiplier === undefined) return base.stream(model, context, options);
+      return base.stream(
+        withPriorityCost(model, multiplier),
+        context,
+        withPriorityOptions(options, state, decorator),
+      );
+    },
+    streamSimple(
+      model: Model<Api>,
+      context: Context,
+      options?: SimpleStreamOptions,
+    ): AssistantMessageEventStream {
+      const multiplier = multiplierFor(model);
+      if (multiplier === undefined) {
+        return base.streamSimple(model, context, options);
+      }
+      return base.streamSimple(
+        withPriorityCost(model, multiplier),
+        context,
+        withPriorityOptions(options, state, decorator),
+      );
+    },
+    fetchDeferred: fetchDeferred
+      ? (model, handle, options) => fetchDeferred(model, handle, options)
+      : undefined,
+    cancelDeferred: cancelDeferred
+      ? (model, handle, options) => cancelDeferred(model, handle, options)
+      : undefined,
+  };
+
+  if (getAllModels) {
+    (provider as ProviderExtensions).getAllModels = () => getAllModels();
+  }
+  if (filterAllModels) {
+    (provider as ProviderExtensions).filterAllModels = (models, credential) =>
+      filterAllModels(models, credential);
+  }
+
+  return provider;
+}
+
+/** Installs the wrapper and restores the builtin provider during teardown. */
+export function registerPriorityFireworksProvider(
+  pi: ExtensionAPI,
+  state: InMemoryPriorityModeState,
+  policy: PriorityEligibilityPolicy,
+  decorator: PriorityPayloadDecorator,
+): void {
+  const provider = createPriorityFireworksProvider(
+    getBuiltinFireworksProvider(),
+    state,
+    policy,
+    decorator,
+  );
+  pi.registerProvider(provider);
+  pi.on("session_shutdown", () => {
+    pi.unregisterProvider(FIREWORKS_PROVIDER_ID);
+  });
+}

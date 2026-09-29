@@ -40,6 +40,7 @@ Topic 2: if rule 2; else rule 3; then rule 4; no rule 5a, rule 5b, etc.
 | `answer/` | Turns unanswered assistant questions into an interactive Q&A flow with `/answer` or `Ctrl+.` |
 | `aside/` | Opens a side conversation with `/aside`, keeps its own thread, and can inject a summary back into the main chat |
 | `files/` | Adds `/files` and `/diff` to browse repo files, recent references, diffs, Finder reveal, and Quick Look |
+| `fireworks-priority/` | Adds opt-in Fireworks priority-tier requests with `/fireworks-priority` |
 | `loop/` | Adds `/loop` plus `signal_loop_success` so Pi can keep iterating until a stop condition is met |
 | `notifyer/` | Sends terminal notifications when a Pi turn finishes |
 | `openai-fast-mode/` | Adds opt-in OpenAI priority-tier requests for GPT-5.6 Sol with `--fast` and `/fast` |
