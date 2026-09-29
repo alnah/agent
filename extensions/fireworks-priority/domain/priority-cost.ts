@@ -4,8 +4,13 @@ import type {
   ModelCostTier,
 } from "@earendil-works/pi-ai";
 
-function scaleRates(rates: ModelCostRates, multiplier: number): ModelCostRates {
+/**
+ * Scales the four rate fields while preserving every other property, so a
+ * future pi-ai cost field survives the copy unchanged.
+ */
+function scaleRates<T extends ModelCostRates>(rates: T, multiplier: number): T {
   return {
+    ...rates,
     input: rates.input * multiplier,
     output: rates.output * multiplier,
     cacheRead: rates.cacheRead * multiplier,

@@ -26,6 +26,12 @@ interface PayloadOptions {
 interface ProviderExtensions {
   getAllModels?: () => unknown;
   filterAllModels?: (models: unknown, credential: unknown) => unknown;
+  generateImages?: (
+    model: unknown,
+    context: unknown,
+    options?: unknown,
+  ) => unknown;
+  classify?: (model: unknown, context: unknown, options?: unknown) => unknown;
 }
 
 function isFireworksProvider(provider: Provider): boolean {
@@ -94,6 +100,8 @@ export function createPriorityFireworksProvider(
   const baseExtensions = base as ProviderExtensions;
   const getAllModels = baseExtensions.getAllModels?.bind(base);
   const filterAllModels = baseExtensions.filterAllModels?.bind(base);
+  const generateImages = baseExtensions.generateImages?.bind(base);
+  const classify = baseExtensions.classify?.bind(base);
 
   const multiplierFor = (model: Model<Api>): number | undefined => {
     const snapshot = state.snapshot();
@@ -161,6 +169,17 @@ export function createPriorityFireworksProvider(
   if (filterAllModels) {
     (provider as ProviderExtensions).filterAllModels = (models, credential) =>
       filterAllModels(models, credential);
+  }
+  if (generateImages) {
+    (provider as ProviderExtensions).generateImages = (
+      model,
+      context,
+      options,
+    ) => generateImages(model, context, options);
+  }
+  if (classify) {
+    (provider as ProviderExtensions).classify = (model, context, options) =>
+      classify(model, context, options);
   }
 
   return provider;

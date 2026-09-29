@@ -12,7 +12,7 @@ import type {
 
 const PRICING_WARNING =
   "Fireworks priority mode armed. Priority pricing applies to eligible requests (1.2x-1.5x standard rates).";
-const USAGE = "Usage: /fireworks-priority [on|off|status]";
+const USAGE = "Usage: /fireworks-priority [toggle|on|off|status]";
 
 export type PriorityModeCommandResult =
   | { readonly kind: "ignored" }
