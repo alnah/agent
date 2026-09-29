@@ -1,4 +1,4 @@
-import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import {
   Container,
   type Focusable,
@@ -7,7 +7,7 @@ import {
   type TUI,
   truncateToWidth,
   visibleWidth,
-} from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-tui";
 
 type Theme = ExtensionContext["ui"]["theme"];
 

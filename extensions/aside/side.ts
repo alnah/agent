@@ -1,16 +1,15 @@
 import type {
   ThinkingLevel as AiThinkingLevel,
   AssistantMessage,
-} from "@mariozechner/pi-ai";
+} from "@earendil-works/pi-ai";
 import {
   type AgentSession,
   type AgentSessionEvent,
-  codingTools,
   createAgentSession,
   type ExtensionCommandContext,
   type ExtensionContext,
   SessionManager,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 
 import {
   buildSeedMessages,
@@ -63,9 +62,8 @@ export async function createSideSession(
   const { session } = await createAgentSession({
     sessionManager: SessionManager.inMemory(),
     model: ctx.model,
-    modelRegistry: ctx.modelRegistry as AgentSession["modelRegistry"],
     thinkingLevel: getThinkingLevel(pi),
-    tools: codingTools,
+    tools: ["read", "bash", "edit", "write"],
     resourceLoader: createAsideResourceLoader(ctx),
   });
 
@@ -106,7 +104,6 @@ export async function summarizeThread(
   const { session } = await createAgentSession({
     sessionManager: SessionManager.inMemory(),
     model,
-    modelRegistry: ctx.modelRegistry as AgentSession["modelRegistry"],
     thinkingLevel: "off" as SessionThinkingLevel,
     tools: [],
     resourceLoader: createAsideResourceLoader(ctx, [ASIDE_SUMMARY_PROMPT]),

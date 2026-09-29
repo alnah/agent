@@ -1,6 +1,6 @@
-import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
-import { getMarkdownTheme } from "@mariozechner/pi-coding-agent";
-import { Markdown, truncateToWidth } from "@mariozechner/pi-tui";
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { getMarkdownTheme } from "@earendil-works/pi-coding-agent";
+import { Markdown, truncateToWidth } from "@earendil-works/pi-tui";
 
 import type { AsideDetails } from "./side.ts";
 

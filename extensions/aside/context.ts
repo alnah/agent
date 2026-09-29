@@ -1,4 +1,4 @@
-import type { AssistantMessage, Message } from "@mariozechner/pi-ai";
+import type { AssistantMessage, Message } from "@earendil-works/pi-ai";
 import {
   type AgentSession,
   buildSessionContext,
@@ -6,7 +6,7 @@ import {
   type ExtensionCommandContext,
   type ExtensionContext,
   type ResourceLoader,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 
 import type { AsideDetails, SessionThinkingLevel } from "./side.ts";
 
@@ -59,7 +59,9 @@ export function createAsideResourceLoader(
     getThemes: () => ({ themes: [], diagnostics: [] }),
     getAgentsFiles: () => ({ agentsFiles: [] }),
     getSystemPrompt: () => systemPrompt,
+    getSystemPromptSource: () => undefined,
     getAppendSystemPrompt: () => appendSystemPrompt,
+    getAppendSystemPromptSources: () => [],
     extendResources: () => {},
     reload: async () => {},
   };
