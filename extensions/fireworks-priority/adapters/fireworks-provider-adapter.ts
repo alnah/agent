@@ -1,11 +1,11 @@
 import type {
   Api,
   AssistantMessageEventStream,
-  Context,
   Model,
   Provider,
   SimpleStreamOptions,
   StreamOptions,
+  TranscriptContext,
 } from "@earendil-works/pi-ai";
 import { builtinProviders } from "@earendil-works/pi-ai/providers/all";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -130,7 +130,7 @@ export function createPriorityFireworksProvider(
       : undefined,
     stream(
       model: Model<Api>,
-      context: Context,
+      context: TranscriptContext,
       options?: StreamOptions,
     ): AssistantMessageEventStream {
       const multiplier = multiplierFor(model);
@@ -143,7 +143,7 @@ export function createPriorityFireworksProvider(
     },
     streamSimple(
       model: Model<Api>,
-      context: Context,
+      context: TranscriptContext,
       options?: SimpleStreamOptions,
     ): AssistantMessageEventStream {
       const multiplier = multiplierFor(model);
