@@ -38,14 +38,11 @@ Topic 2: if rule 2; else rule 3; then rule 4; no rule 5a, rule 5b, etc.
 | Extension | What it does |
 | --- | --- |
 | `answer/` | Turns unanswered assistant questions into an interactive Q&A flow with `/answer` or `Ctrl+.` |
-| `aside/` | Opens a side conversation with `/aside`, keeps its own thread, and can inject a summary back into the main chat |
 | `files/` | Adds `/files` and `/diff` to browse repo files, recent references, diffs, Finder reveal, and Quick Look |
 | `fireworks-priority/` | Adds opt-in Fireworks priority-tier requests with `/fireworks-priority` |
-| `loop/` | Adds `/loop` plus `signal_loop_success` so Pi can keep iterating until a stop condition is met |
 | `notifyer/` | Sends terminal notifications when a Pi turn finishes |
 | `review/` | Adds `/review` and `/end-review` for branch, commit, PR, folder, and uncommitted-change review workflows |
 | `todos/` | Adds a shared file-backed todo tool and `/todos` UI for assigning, refining, and closing work |
-| `typescript-symbols/` | Adds `ts_definition`, `ts_references`, `ts_rename`, and `ts_symbols` for TypeScript symbol navigation, lookup, and project-wide rename |
 | `usage/` | Adds `/usage` to inspect recent Pi session activity across 7, 30, and 90 day windows |
 | `window/` | Adds `/window` to inspect context-window usage, loaded resources, and observed skill reads |
 
@@ -85,8 +82,7 @@ Add this to `~/.pi/agent/settings.json`:
 {
   "packages": [
     {
-      "source": "/absolute/path/to/agent",
-      "extensions": ["!extensions/typescript-symbols/index.ts"]
+      "source": "/absolute/path/to/agent"
     }
   ]
 }
@@ -94,7 +90,7 @@ Add this to `~/.pi/agent/settings.json`:
 
 Pi will auto-discover:
 
-- `extensions/`, except `typescript-symbols/` globally
+- `extensions/`
 - `skills/`
 - `prompts/`
 
@@ -111,30 +107,6 @@ If those files already exist, replace them with `ln -sf`.
 
 Use `/reload`, or restart Pi.
 
-### Local setup for `typescript-symbols/`
-
-`typescript-symbols/` depends on the local `tsconfig.json` or `jsconfig.json`.
-I do not enable it globally.
-I keep the code in this repo and turn it on only in the repos I want, through a local, untracked `.pi/settings.json` that loads this package for that repo.
-
-In this repo:
-
-```json
-{
-  "packages": [".."]
-}
-```
-
-In another local repo, point to this clone from that repo's `.pi/settings.json`. Use either an absolute path or the relative path that matches your own directory layout.
-
-```json
-{
-  "packages": ["/absolute/path/to/agent"]
-}
-```
-
-The global Pi settings can keep excluding `typescript-symbols`, while the repo-local package entry re-enables it only for that project. The extension uses that repo's current working directory and resolves the nearest matching `tsconfig.json` or `jsconfig.json` for the requested file. If a repo contains several nested TypeScript projects, pass a file path inside the target project.
-
 ## Development
 
 Extension development lives under `extensions/`.
@@ -150,5 +122,5 @@ npm run format
 ## Thanks
 
 - [Mario Zechner](https://github.com/badlogic) for [Pi](https://github.com/badlogic/pi-mono)
-- [Armin Ronacher](https://github.com/mitsuhiko) for the code and ideas behind the `answer`, `aside`, `files`, `loop`, `review`, `todos`, `usage`, and `window` extensions via [`agent-stuff`](https://github.com/mitsuhiko/agent-stuff)
+- [Armin Ronacher](https://github.com/mitsuhiko) for the code and ideas behind the `answer`, `files`, `review`, `todos`, `usage`, and `window` extensions via [`agent-stuff`](https://github.com/mitsuhiko/agent-stuff)
 
