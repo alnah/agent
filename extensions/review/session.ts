@@ -5,7 +5,7 @@
  * to start so loop-fixing can react to the latest result.
  */
 
-import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 const LOOP_START_TIMEOUT_MS = 15000;
 const LOOP_START_POLL_MS = 50;
