@@ -7,7 +7,7 @@ import {
   Text,
   type TUI,
 } from "@earendil-works/pi-tui";
-import { formatUsd } from "./metrics.ts";
+import { formatUsd } from "../core/metrics.ts";
 
 /**
  * Presentation model consumed by the interactive `/window` TUI.

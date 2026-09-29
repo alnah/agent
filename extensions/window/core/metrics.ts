@@ -1,7 +1,18 @@
-import type {
-  ExtensionCommandContext,
-  SessionMessageEntry,
-} from "@earendil-works/pi-coding-agent";
+/**
+ * Normalizes usage cost payloads into one numeric total.
+ *
+ * Session history may contain slightly different shapes depending on provider
+ * or runtime version, so the command accepts both flat and nested totals.
+ */
+export type UsageLike = {
+  cost?: unknown;
+  input?: unknown;
+  inputTokens?: unknown;
+  output?: unknown;
+  outputTokens?: unknown;
+  cacheRead?: unknown;
+  cacheWrite?: unknown;
+};
 
 /**
  * Formats a session cost total for compact display.
@@ -27,22 +38,6 @@ export function estimateTokens(text: string): number {
   return Math.max(0, Math.ceil(text.length / 4));
 }
 
-/**
- * Normalizes usage cost payloads into one numeric total.
- *
- * Session history may contain slightly different shapes depending on provider
- * or runtime version, so the command accepts both flat and nested totals.
- */
-type UsageLike = {
-  cost?: unknown;
-  input?: unknown;
-  inputTokens?: unknown;
-  output?: unknown;
-  outputTokens?: unknown;
-  cacheRead?: unknown;
-  cacheWrite?: unknown;
-};
-
 export function extractCostTotal(usage: unknown): number {
   if (!usage || typeof usage !== "object") return 0;
   const c = (usage as UsageLike).cost;
@@ -59,51 +54,6 @@ export function extractCostTotal(usage: unknown): number {
     return Number.isFinite(n) ? n : 0;
   }
   return 0;
-}
-
-/**
- * Aggregates assistant-side token usage and cost across the current session.
- *
- * `/window` reports session totals separately from current context usage, so it
- * walks persisted assistant messages and tolerates legacy usage field names.
- */
-export function sumSessionUsage(ctx: ExtensionCommandContext): {
-  input: number;
-  output: number;
-  cacheRead: number;
-  cacheWrite: number;
-  totalTokens: number;
-  totalCost: number;
-} {
-  let input = 0;
-  let output = 0;
-  let cacheRead = 0;
-  let cacheWrite = 0;
-  let totalCost = 0;
-
-  for (const entry of ctx.sessionManager.getEntries()) {
-    if (entry.type !== "message") continue;
-
-    const msg = (entry as SessionMessageEntry).message;
-    if (msg.role !== "assistant") continue;
-
-    const usage = msg.usage as UsageLike | undefined;
-    if (!usage) continue;
-    input += Number(usage.input ?? usage.inputTokens ?? 0) || 0;
-    output += Number(usage.output ?? usage.outputTokens ?? 0) || 0;
-    cacheRead += Number(usage.cacheRead ?? 0) || 0;
-    cacheWrite += Number(usage.cacheWrite ?? 0) || 0;
-    totalCost += extractCostTotal(usage);
-  }
-
-  return {
-    input,
-    output,
-    cacheRead,
-    cacheWrite,
-    totalTokens: input + output + cacheRead + cacheWrite,
-    totalCost,
-  };
 }
 
 /**

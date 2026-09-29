@@ -6,7 +6,7 @@ import {
   isReadToolResult,
   type ToolResultEvent,
 } from "@earendil-works/pi-coding-agent";
-import { normalizeReadPath } from "./files.ts";
+import { normalizeReadPath } from "../core/files.ts";
 
 /**
  * Path metadata used to map read tool activity back to a discovered skill.

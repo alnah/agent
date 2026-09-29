@@ -6,13 +6,13 @@ import {
   formatExtensionSourceLabel,
   loadProjectContextFiles,
   shortenPath,
-} from "./files.ts";
+} from "../core/files.ts";
 import {
   estimateTokens,
   estimateToolDefinitionTokens,
   formatUsd,
-  sumSessionUsage,
-} from "./metrics.ts";
+} from "../core/metrics.ts";
+import { sumSessionUsage } from "./metrics.ts";
 import {
   getSkillsObservedViaReadFromSession,
   normalizeSkillName,
