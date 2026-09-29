@@ -30,7 +30,7 @@ Template: `assets/CHANGELOG.template.md`.
 
 1. Preflight: clean tree, CI green, version chosen. SemVer: `feat` minor, `fix` patch, breaking major.
 2. Rename `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`. Commit.
-3. Tag and publish. The tag must contain the released section and no `[Unreleased]`, matching pi.
+3. Tag and publish. The tag must contain the released section and no `[Unreleased]`.
 4. Extract notes with the vendored script: `scripts/release-notes.sh vX.Y.Z > notes.md`.
 5. Publish the release with the notes file. See `references/adapters.md`.
 6. After publication, add an empty `## [Unreleased]` back on the default branch. Commit.
@@ -40,7 +40,7 @@ Git operations (status, commits, tags, push) follow the `git-workflow` skill.
 
 ## Script
 
-Vendor `scripts/release-notes.sh` into each project under `scripts/`, like pi vendors `scripts/release-notes.mjs`. Do not run it from this skill directory.
+Vendor `scripts/release-notes.sh` into each project under `scripts/`. Do not run it from this skill directory.
 
 ```bash
 scripts/release-notes.sh v0.1.1
@@ -58,18 +58,18 @@ Behavior:
 - Leaves absolute URLs, `#anchors`, `//` and scheme links untouched.
 - Exits non-zero when the tag is invalid, the section is missing or empty, or the repo cannot be detected.
 
-Honor the pi lesson: write the generated notes outside the repository when the release tool refuses a dirty tree, for example `"${RUNNER_TEMP}/release-notes.md"` in GitHub Actions.
+Write the generated notes outside the repository when the release tool refuses a dirty tree, for example `"${RUNNER_TEMP}/release-notes.md"` in GitHub Actions.
 
 ## Monorepo
 
 One repository, several releasable packages.
 
-- Per-package changelog, repo-wide tag: pi pattern. File at `packages/app/CHANGELOG.md`, links relative to `packages/app`, extraction with `--changelog packages/app/CHANGELOG.md --base-path packages/app`.
+- Per-package changelog, repo-wide tag. File at `packages/app/CHANGELOG.md`, links relative to `packages/app`, extraction with `--changelog packages/app/CHANGELOG.md --base-path packages/app`.
 - Single changelog at the root is valid when every package ships together. Pick one model per repository and stay consistent.
 
 ## Prereleases
 
-Out of scope in v1, matching pi: stable SemVer releases only. If a project needs `X.Y.Z-rc.N`, treat it as a normal section heading and mark the hosting release as prerelease in the project adapter.
+Out of scope in v1: stable SemVer releases only. If a project needs `X.Y.Z-rc.N`, treat it as a normal section heading and mark the hosting release as prerelease in the project adapter.
 
 ## Failure modes
 
