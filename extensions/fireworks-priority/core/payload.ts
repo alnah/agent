@@ -1,4 +1,4 @@
-import type { PriorityModeFault } from "./priority-mode-state.ts";
+import type { PriorityModeFault } from "./state.ts";
 
 export type PriorityPayloadTransformResult =
   | { readonly kind: "unchanged"; readonly payload: unknown }

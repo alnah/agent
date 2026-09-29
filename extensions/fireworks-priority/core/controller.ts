@@ -1,14 +1,26 @@
-import type { ModelSnapshot } from "../domain/model-snapshot.ts";
-import type { PriorityCommandParser } from "../domain/priority-command.ts";
-import type { PriorityEligibilityPolicy } from "../domain/priority-eligibility-policy.ts";
+import type {
+  ModelSnapshot,
+  PriorityEligibilityPolicy,
+} from "./eligibility.ts";
 import type {
   InMemoryPriorityModeState,
+  PriorityCommandParser,
   PriorityMode,
-} from "../domain/priority-mode-state.ts";
-import type {
-  PriorityPresentation,
-  PriorityView,
-} from "./priority-mode-view.ts";
+} from "./state.ts";
+
+export type PriorityNotificationLevel = "info" | "warning" | "error";
+
+export type PriorityPresentation =
+  | { readonly kind: "hidden" }
+  | { readonly kind: "waiting" }
+  | { readonly kind: "priority" }
+  | { readonly kind: "fault"; readonly message: string };
+
+/** Output boundary used by the application layer. */
+export interface PriorityView {
+  render(presentation: PriorityPresentation): void;
+  notify(message: string, level: PriorityNotificationLevel): void;
+}
 
 const PRICING_WARNING =
   "Fireworks priority mode armed. Priority pricing applies to eligible requests (1.2x-1.5x standard rates).";

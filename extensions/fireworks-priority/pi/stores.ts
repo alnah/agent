@@ -1,13 +1,18 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
-import { getAgentDir } from "@earendil-works/pi-coding-agent";
-import type { PriorityPreferenceStore } from "../application/priority-preference-store.ts";
-import type { PriorityMode } from "../domain/priority-mode-state.ts";
+import {
+  type ExtensionAPI,
+  getAgentDir,
+  type SessionEntry,
+  SessionManager,
+} from "@earendil-works/pi-coding-agent";
+import type { PriorityPreferenceStore } from "../core/preference.ts";
 import {
   decodePriorityPreference,
   encodePriorityPreference,
-} from "../domain/priority-preference.ts";
+  type PriorityMode,
+} from "../core/state.ts";
 
 const PREFERENCE_FILENAME = "fireworks-priority.json";
 const READ_ERROR = "Cannot read the global fireworks priority preference";
@@ -72,4 +77,44 @@ export class GlobalPriorityStore implements PriorityPreferenceStore {
       await rm(temporaryPath, { force: true }).catch(() => undefined);
     }
   }
+}
+
+const SESSION_ENTRY_TYPE = "fireworks-priority-state";
+
+export interface PrioritySessionReadResult {
+  readonly mode?: PriorityMode;
+  readonly invalid: boolean;
+}
+
+/** Reads the latest valid mode on one active session branch. */
+export function readPrioritySessionState(
+  entries: readonly SessionEntry[],
+): PrioritySessionReadResult {
+  let invalid = false;
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (entry.type !== "custom" || entry.customType !== SESSION_ENTRY_TYPE) {
+      continue;
+    }
+    const decoded = decodePriorityPreference(entry.data);
+    if (decoded.valid) return { mode: decoded.mode, invalid };
+    invalid = true;
+  }
+  return { invalid };
+}
+
+/** Reads the source session checkpoint written immediately before a fork. */
+export function readPriorityForkState(
+  previousSessionFile: string,
+): PrioritySessionReadResult {
+  const sourceSession = SessionManager.open(previousSessionFile);
+  return readPrioritySessionState(sourceSession.getBranch());
+}
+
+/** Appends mode-only state that never enters model context. */
+export function appendPrioritySessionState(
+  pi: ExtensionAPI,
+  mode: PriorityMode,
+): void {
+  pi.appendEntry(SESSION_ENTRY_TYPE, encodePriorityPreference(mode));
 }

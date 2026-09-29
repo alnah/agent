@@ -2,17 +2,19 @@ import type {
   ExtensionAPI,
   ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
-import type { PriorityModeController } from "../application/priority-mode-controller.ts";
-import type { PriorityPreferenceStore } from "../application/priority-preference-store.ts";
-import type { PriorityStartupPolicy } from "../application/priority-startup-policy.ts";
-import type { ModelSnapshot } from "../domain/model-snapshot.ts";
-import type { PriorityMode } from "../domain/priority-mode-state.ts";
+import type { PriorityModeController } from "../core/controller.ts";
+import type { ModelSnapshot } from "../core/eligibility.ts";
+import type {
+  PriorityPreferenceStore,
+  PriorityStartupPolicy,
+} from "../core/preference.ts";
+import type { PriorityMode } from "../core/state.ts";
 import {
   appendPrioritySessionState,
   readPriorityForkState,
   readPrioritySessionState,
-} from "./pi-priority-persistence-adapter.ts";
-import { PiPriorityViewAdapter } from "./pi-view-adapter.ts";
+} from "./stores.ts";
+import { PiPriorityViewAdapter } from "./view.ts";
 
 const COMMAND_NAME = "fireworks-priority";
 const INVALID_SESSION_STATE =

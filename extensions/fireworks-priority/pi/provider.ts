@@ -9,10 +9,10 @@ import type {
 } from "@earendil-works/pi-ai";
 import { builtinProviders } from "@earendil-works/pi-ai/providers/all";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { scalePriorityCost } from "../domain/priority-cost.ts";
-import type { PriorityEligibilityPolicy } from "../domain/priority-eligibility-policy.ts";
-import type { InMemoryPriorityModeState } from "../domain/priority-mode-state.ts";
-import type { PriorityPayloadDecorator } from "../domain/priority-payload-decorator.ts";
+import { scalePriorityCost } from "../core/cost.ts";
+import type { PriorityEligibilityPolicy } from "../core/eligibility.ts";
+import type { PriorityPayloadDecorator } from "../core/payload.ts";
+import type { InMemoryPriorityModeState } from "../core/state.ts";
 
 const FIREWORKS_PROVIDER_ID = "fireworks";
 

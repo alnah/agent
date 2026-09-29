@@ -1,4 +1,8 @@
-import type { ModelSnapshot } from "./model-snapshot.ts";
+export interface ModelSnapshot {
+  readonly provider: string;
+  readonly api: string;
+  readonly modelId: string;
+}
 
 export type PriorityIneligibilityReason =
   | "missing_model"

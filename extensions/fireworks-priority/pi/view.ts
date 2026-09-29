@@ -3,7 +3,7 @@ import type {
   PriorityNotificationLevel,
   PriorityPresentation,
   PriorityView,
-} from "../application/priority-mode-view.ts";
+} from "../core/controller.ts";
 
 const STATUS_KEY = "fireworks-priority";
 
