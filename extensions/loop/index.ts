@@ -8,8 +8,8 @@
 import type {
   ExtensionAPI,
   ExtensionContext,
-} from "@mariozechner/pi-coding-agent";
-import { compact } from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
+import { compact } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { buildPrompt, getCompactionInstructions } from "./prompting.ts";
 import { showLoopSelector } from "./selector.ts";
@@ -281,12 +281,20 @@ export default function loopExtension(pi: ExtensionAPI): void {
       .filter(Boolean)
       .join("\n\n");
 
+    const headers = auth.headers
+      ? Object.fromEntries(
+          Object.entries(auth.headers).filter(
+            (entry): entry is [string, string] => entry[1] !== null,
+          ),
+        )
+      : undefined;
+
     try {
       const compaction = await compact(
         event.preparation,
         ctx.model,
         auth.apiKey ?? "",
-        auth.headers,
+        headers,
         instructionParts,
         event.signal,
       );

@@ -5,13 +5,14 @@
  * model or a cheaper Anthropic Haiku model when available.
  */
 
-import {
-  type Api,
-  complete,
-  type Model,
-  type UserMessage,
-} from "@mariozechner/pi-ai";
-import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type {
+  Api,
+  Model,
+  ProviderHeaders,
+  UserMessage,
+} from "@earendil-works/pi-ai";
+import { complete } from "@earendil-works/pi-ai/compat";
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { getConditionText, summarizeCondition } from "./prompting.ts";
 import type { LoopMode } from "./state.ts";
 
@@ -34,7 +35,7 @@ Use the best form that makes sense for the loop condition.
 async function selectSummaryModel(ctx: ExtensionContext): Promise<{
   model: Model<Api>;
   apiKey?: string;
-  headers?: Record<string, string>;
+  headers?: ProviderHeaders;
 } | null> {
   if (!ctx.model) return null;
 
