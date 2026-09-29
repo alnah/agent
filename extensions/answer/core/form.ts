@@ -1,4 +1,4 @@
-import type { ExtractedQuestion } from "./parsing.ts";
+import type { ExtractedQuestion } from "./questions.ts";
 
 export type SubmitCheck =
   | { ok: true }

@@ -8,12 +8,12 @@ import {
   type ExtractParams,
   extractQuestionsFromAssistantText,
   heuristicExtractQuestions,
-} from "./extraction.ts";
-import {
-  type ExtractionResult,
-  getLastCompleteAssistantText,
-  type LastAssistantTextResult,
-} from "./parsing.ts";
+} from "../core/extraction.ts";
+import type {
+  ExtractionResult,
+  LastAssistantTextResult,
+} from "../core/questions.ts";
+import { getLastCompleteAssistantText } from "./assistant-text.ts";
 import { QnAComponent } from "./qna-ui.ts";
 
 /**

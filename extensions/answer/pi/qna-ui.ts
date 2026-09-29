@@ -13,8 +13,11 @@ import {
   createQuestionnaireController,
   type QuestionnaireController,
   type SubmitCheck,
-} from "./form.ts";
-import { buildAnswerTranscript, type ExtractedQuestion } from "./parsing.ts";
+} from "../core/form.ts";
+import {
+  buildAnswerTranscript,
+  type ExtractedQuestion,
+} from "../core/questions.ts";
 
 /**
  * Interactive questionnaire component used by `/answer`.

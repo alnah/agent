@@ -3,7 +3,7 @@ import {
   type ExtractedQuestion,
   type ExtractionResult,
   parseExtractionResult,
-} from "./parsing.ts";
+} from "./questions.ts";
 
 /**
  * System prompt used when a model-backed extraction path is available.
