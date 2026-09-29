@@ -21,7 +21,7 @@ import {
   type MeasurementMode,
   RANGE_DAYS,
   type RangeAgg,
-} from "./aggregation.ts";
+} from "../core/aggregation.ts";
 import {
   addDaysLocal,
   countDaysInclusiveLocal,
@@ -30,7 +30,7 @@ import {
   TOD_BUCKETS,
   todBucketLabel,
   toLocalDayKey,
-} from "./calendar.ts";
+} from "../core/calendar.ts";
 import {
   clamp01,
   DEFAULT_BG,
@@ -38,7 +38,7 @@ import {
   mixRgb,
   type RGB,
   weightedMix,
-} from "./palette.ts";
+} from "../core/palette.ts";
 
 /**
  * Wraps text in a 24-bit ANSI background color.
