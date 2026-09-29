@@ -48,7 +48,38 @@ export {
   walkSessionFiles,
 };
 
-const SESSION_ROOT = path.join(os.homedir(), ".pi", "agent", "sessions");
+/**
+ * Resolves Pi's agent directory the same way the runtime does, so a
+ * relocated `PI_CODING_AGENT_DIR` also moves the scanned sessions.
+ */
+function resolveAgentDir(): string {
+  const envCandidates = ["PI_CODING_AGENT_DIR", "TAU_CODING_AGENT_DIR"];
+  let envDir: string | undefined;
+  for (const key of envCandidates) {
+    if (process.env[key]) {
+      envDir = process.env[key];
+      break;
+    }
+  }
+  if (!envDir) {
+    for (const [key, value] of Object.entries(process.env)) {
+      if (key.endsWith("_CODING_AGENT_DIR") && value) {
+        envDir = value;
+        break;
+      }
+    }
+  }
+  if (envDir) {
+    if (envDir === "~") return os.homedir();
+    if (envDir.startsWith("~/")) {
+      return path.join(os.homedir(), envDir.slice(2));
+    }
+    return envDir;
+  }
+  return path.join(os.homedir(), ".pi", "agent");
+}
+
+const SESSION_ROOT = path.join(resolveAgentDir(), "sessions");
 
 /**
  * Updates a bordered loader message even though the inner loader is not exposed.
