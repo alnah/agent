@@ -1,9 +1,9 @@
 # --- Pi runtime and local config ---
 .pi/
 auth.json
-models.json
 sessions/
 settings.json
+# models.json stays tracked: provider config only, API keys must stay as $ENV references
 
 # --- JavaScript / TypeScript ---
 node_modules/

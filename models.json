@@ -1,0 +1,43 @@
+{
+  "$schema": "https://pi.dev/schemas/models.schema.json",
+  "providers": {
+    "inception": {
+      "name": "Inception",
+      "baseUrl": "https://api.inceptionlabs.ai/v1",
+      "api": "openai-completions",
+      "apiKey": "$INCEPTION_API_KEY",
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": true,
+        "thinkingFormat": "openai",
+        "maxTokensField": "max_completion_tokens"
+      },
+      "models": [
+        {
+          "id": "mercury-3",
+          "name": "Mercury 3",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": "instant",
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": null,
+            "max": null
+          },
+          "input": ["text"],
+          "cost": {
+            "input": 0.2,
+            "output": 0.7,
+            "cacheRead": 0.02,
+            "cacheWrite": 0
+          },
+          "contextWindow": 1000000,
+          "maxTokens": 131072
+        }
+      ]
+    }
+  }
+}
