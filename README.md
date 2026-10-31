@@ -39,6 +39,7 @@ Topic 2: if rule 2; else rule 3; then rule 4; no rule 5a, rule 5b, etc.
 | --- | --- |
 | `answer/` | Turns unanswered assistant questions into an interactive Q&A flow with `/answer` or `Ctrl+.` |
 | `files/` | Adds `/files` and `/diff` to browse repo files, recent references, diffs, Finder reveal, and Quick Look |
+| `media/` | Adds native video and audio reading to `read` for models that declare `media` input in `models.json` |
 | `fireworks-priority/` | Adds opt-in Fireworks priority-tier requests with `/fireworks-priority` |
 | `notifyer/` | Sends terminal notifications when a Pi turn finishes |
 | `review/` | Adds `/review` and `/end-review` for branch, commit, PR, folder, and uncommitted-change review workflows |

@@ -64,6 +64,10 @@
             "max": null
           },
           "input": ["text", "image"],
+          "media": {
+            "video": true,
+            "audio": true
+          },
           "cost": {
             "input": 0.43,
             "output": 0.87,
