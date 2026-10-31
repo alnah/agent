@@ -38,6 +38,68 @@
           "maxTokens": 131072
         }
       ]
+    },
+    "deepinfra": {
+      "name": "DeepInfra",
+      "baseUrl": "https://api.deepinfra.com/v1/openai",
+      "api": "openai-completions",
+      "apiKey": "$DEEPINFRA_API_KEY",
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "models": [
+        {
+          "id": "XiaomiMiMo/MiMo-V2.6-Pro",
+          "name": "MiMo V2.6 Pro",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": "minimal",
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": "max"
+          },
+          "input": ["text", "image"],
+          "cost": {
+            "input": 0.43,
+            "output": 0.87,
+            "cacheRead": 0.0036,
+            "cacheWrite": 0
+          },
+          "contextWindow": 1048576,
+          "maxTokens": 65536
+        },
+        {
+          "id": "deepseek-ai/DeepSeek-V4.1-Flash",
+          "name": "DeepSeek V4.1 Flash",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": "minimal",
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": "max"
+          },
+          "input": ["text", "image"],
+          "cost": {
+            "input": 0.2,
+            "output": 0.6,
+            "cacheRead": 0.006,
+            "cacheWrite": 0
+          },
+          "contextWindow": 1048576,
+          "maxTokens": 65536,
+          "compat": {
+            "thinkingFormat": "deepseek"
+          }
+        }
+      ]
     }
   }
 }
