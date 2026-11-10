@@ -78,33 +78,6 @@
           "maxTokens": 65536
         },
         {
-          "id": "XiaomiMiMo/MiMo-V2.6-Flash",
-          "name": "MiMo V2.6 Flash",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "off": "none",
-            "minimal": null,
-            "low": null,
-            "medium": null,
-            "high": "high",
-            "xhigh": null,
-            "max": null
-          },
-          "input": ["text", "image"],
-          "media": {
-            "video": true,
-            "audio": true
-          },
-          "cost": {
-            "input": 0.14,
-            "output": 0.28,
-            "cacheRead": 0.0028,
-            "cacheWrite": 0
-          },
-          "contextWindow": 1048576,
-          "maxTokens": 65536
-        },
-        {
           "id": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
           "name": "DeepSeek V4.1 Flash 1017",
           "reasoning": true,
